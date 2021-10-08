@@ -1,8 +1,6 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
 from transfomersbert import TransfomersBert, TransfomersTokenizer
-import os
-import datetime
 import numpy as np
 
 keiyakudata_path = r".\data\keiyakudata.csv"
@@ -30,12 +28,10 @@ for i in range(0, len(datas), 1000):
     predict_targets = predict_datas[i:i+1000]
     scores = model.predict(predict_targets)
 
-    # for target, score1, score2, score3 in zip(targets, scores[0], scores[1], scores[2]):
     for target, score1, score2 in zip(targets, scores[0], scores[1]):
         file = target[0]
         sentense = target[6]
         kind1 = score2.argmax()
-        # kind2 = score3.argmax()
 
         if bef_file != file:
             print("{}*********************************************".format(file))
@@ -43,7 +39,6 @@ for i in range(0, len(datas), 1000):
         if score1 >= score_threshold:
             print("{}---------------------------------------------".format(score1))
             
-        # print("{}-{:0.2f}_{}-{:0.2f}:{}".format(kind1, score2[kind1], kind2, score3[kind2], sentense))
         print("{}-{:0.2f}:{}".format(kind1, score2[kind1], sentense))
         
         bef_file = file

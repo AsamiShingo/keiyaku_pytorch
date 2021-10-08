@@ -15,11 +15,9 @@ class TestTransfomersBert:
     def test_get_inputs_base(self, test_transfomers_bert: TransfomersBert):
         inputs = test_transfomers_bert.get_inputs_base()
 
-        # assert len(inputs) == 3
         assert len(inputs) == 2
         assert K.int_shape(inputs[0]) == (None, 20)
         assert K.int_shape(inputs[1]) == (None, 20)
-        # assert K.int_shape(inputs[2]) == (None, 20)
     
     def test_set_trainable(self, test_transfomers_bert: TransfomersBert):
         test_transfomers_bert.set_trainable(False)
@@ -72,30 +70,20 @@ class TestTransfomersTokenizer:
         assert test_transfomers_tokenizer.get_pad_idx() == 3
         assert test_transfomers_tokenizer.get_unk_idx() == 0
         assert test_transfomers_tokenizer.get_cls_idx() == 4
-        # assert test_transfomers_tokenizer.get_sep_idx() == 5
         assert test_transfomers_tokenizer.get_sep_idx() == 2
 
     def test_encode(self, test_transfomers_tokenizer: TransfomersTokenizer):
-        # cls_idx = test_transfomers_tokenizer.get_cls_idx()
         sep_idx = test_transfomers_tokenizer.get_sep_idx()
 
         encode = test_transfomers_tokenizer.encode('イギリスグループ運動')
-        # assert len(encode) == 3
         assert len(encode) == 2
-        # assert encode[0] == [cls_idx, 6302, 488, 542, sep_idx]
         assert encode[0] == [6302, 488, 542, sep_idx]
-        # assert encode[1] == [1, 1, 1, 1, 1]
         assert encode[1] == [1, 1, 1, 1]
-        # assert encode[2] == [0, 0, 0, 0, 0]
 
         encode = test_transfomers_tokenizer.encode('イギリスグループ運動', 'イギリスグループ運動')
-        # assert len(encode) == 3
         assert len(encode) == 2
-        # assert encode[0] == [cls_idx, 6302, 488, 542, sep_idx, 6302, 488, 542, sep_idx]
         assert encode[0] == [6302, 488, 542, sep_idx, 6302, 488, 542, sep_idx]
-        # assert encode[1] == [1, 1, 1, 1, 1, 1, 1, 1, 1]
         assert encode[1] == [1, 1, 1, 1, 1, 1, 1, 1]
-        # assert encode[2] == [0, 0, 0, 0, 0, 1, 1, 1, 1]
 
 
 

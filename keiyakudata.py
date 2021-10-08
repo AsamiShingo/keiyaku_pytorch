@@ -25,7 +25,6 @@ class KeiyakuData:
         return self.df.values
 
     def get_group_datas(self, tokenizer: TransfomersTokenizer, seq_num):
-        # cls_idx = tokenizer.get_cls_idx()
         sep_idx = tokenizer.get_sep_idx()
         cut_len = int((seq_num - 3)/2)
         cut_len_herf = int(cut_len / 2)
@@ -41,7 +40,6 @@ class KeiyakuData:
             if len(bef_text_idx) > cut_len:
                 bef_text_idx = bef_text_idx[:cut_len_herf] + bef_text_idx[-cut_len_herf:]
 
-            # group_datas.append(([cls_idx] + now_text_idx + [sep_idx] + bef_text_idx + [sep_idx], data[8], data[4], data[5]))
             group_datas.append((now_text_idx + [sep_idx] + bef_text_idx + [sep_idx], data[8], data[4], data[5]))
 
         return group_datas

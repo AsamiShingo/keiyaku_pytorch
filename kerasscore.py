@@ -1,7 +1,4 @@
 import tensorflow as tf
-import numpy as np
-import pandas as pd
-import os
 import tensorflow.keras.backend as K
 from sklearn.metrics import confusion_matrix
 
