@@ -1,6 +1,6 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transfomersbert import TransfomersBert, TransfomersTokenizer
+from transformersbert import TransformersBert, TransformersTokenizer
 import os
 import datetime
 
@@ -11,8 +11,8 @@ save_dir = r".\savedir"
 epoch_num = 20
 seq_len = 256
 
-tokenizer = TransfomersTokenizer()
-bert = TransfomersBert()
+tokenizer = TransformersTokenizer()
+bert = TransformersBert()
 bert.init_bert_model(seq_len)
 
 model = KeiyakuModel(tokenizer)

@@ -1,7 +1,6 @@
 import pytest
 import shutil
-import numpy as np
-from transfomersbert import TransfomersTokenizer
+from transformersbert import TransformersTokenizer
 from keiyakudata import KeiyakuData
 
 class TestKeiyakuData:
@@ -116,8 +115,8 @@ class TestKeiyakuData:
     get_group_datas
     [CLS]+"前文章"+[SEP]+"文章"のID化したリスト、グループ判定値の2列の値が取得できること
     """
-    def test_get_group_datas(self, test_keiyakudata: KeiyakuData, test_transfomers_tokenizer: TransfomersTokenizer):
-        datas = test_keiyakudata.get_group_datas(test_transfomers_tokenizer, 16)
+    def test_get_group_datas(self, test_keiyakudata: KeiyakuData, test_transformers_tokenizer: TransformersTokenizer):
+        datas = test_keiyakudata.get_group_datas(test_transformers_tokenizer, 16)
 
         assert len(datas) == 1136
         assert len(datas[0]) == 4
@@ -145,8 +144,8 @@ class TestKeiyakuData:
     get_study_group_datas
      [CLS]+"前文章"+[SEP]+"文章"のID化したリスト、グループ判定値でグループ判定値が-1以外のデータが取得できること
     """
-    def test_get_study_group_datas(self, test_keiyakudata: KeiyakuData, test_transfomers_tokenizer: TransfomersTokenizer):
-        datas = test_keiyakudata.get_study_group_datas(test_transfomers_tokenizer, 16)
+    def test_get_study_group_datas(self, test_keiyakudata: KeiyakuData, test_transformers_tokenizer: TransformersTokenizer):
+        datas = test_keiyakudata.get_study_group_datas(test_transformers_tokenizer, 16)
 
         assert len(datas) == 299
         assert len(datas[0]) == 4

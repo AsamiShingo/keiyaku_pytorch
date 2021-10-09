@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from tensorflow.python.framework.func_graph import pack_sequence_as
 from kerasscore import KerasScore
 import tensorflow as tf
 

@@ -1,6 +1,5 @@
 import pandas as pd
-import numpy as np
-from transfomersbert import TransfomersTokenizer
+from transformersbert import TransformersTokenizer
 
 class KeiyakuData:
     _CSV_HEADER_CHECK = ["ファイル", "行数", "カテゴリ", "文章グループ", "分類", "条文分類", "文章"]
@@ -24,7 +23,7 @@ class KeiyakuData:
     def get_datas(self):
         return self.df.values
 
-    def get_group_datas(self, tokenizer: TransfomersTokenizer, seq_num):
+    def get_group_datas(self, tokenizer: TransformersTokenizer, seq_num):
         sep_idx = tokenizer.get_sep_idx()
         cut_len = int((seq_num - 3)/2)
         cut_len_herf = int(cut_len / 2)
@@ -44,7 +43,7 @@ class KeiyakuData:
 
         return group_datas
 
-    def get_study_group_datas(self, tokenizer: TransfomersTokenizer, seq_num):
+    def get_study_group_datas(self, tokenizer: TransformersTokenizer, seq_num):
         group_datas = self.get_group_datas(tokenizer, seq_num)
         return list(filter(lambda x: x[1] != -1 and x[2] != -1, group_datas))
 

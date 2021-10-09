@@ -1,6 +1,5 @@
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from sklearn.metrics import confusion_matrix
 
 class KerasScore(tf.keras.metrics.Metric):
     TYPE_TP = "tp"

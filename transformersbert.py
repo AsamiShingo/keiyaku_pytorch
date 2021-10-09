@@ -3,7 +3,7 @@ import tensorflow as tf
 import transformers
 import re
 
-class TransfomersBert:
+class TransformersBert:
     def __init__(self, model_name="rinna/japanese-roberta-base"):
         self.model_name = model_name
 
@@ -36,7 +36,7 @@ class TransfomersBert:
         self.bert_model = transformers.TFRobertaModel.from_pretrained(self.model_name)
         self.output = self.bert_model([self.input_ids, self.input_attention_mask])
 
-class TransfomersTokenizer:
+class TransformersTokenizer:
     def __init__(self, model_name="rinna/japanese-roberta-base"):
         self.model_name = model_name
         self.tokenizer = transformers.T5Tokenizer.from_pretrained(self.model_name)

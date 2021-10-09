@@ -1,18 +1,18 @@
 import pytest
 import os
 from keiyakudata import KeiyakuData
-from transfomersbert import TransfomersBert, TransfomersTokenizer
+from transformersbert import TransformersBert, TransformersTokenizer
 
 @pytest.fixture(scope="session")
-def test_transfomers_bert():
-    bert = TransfomersBert()
+def test_transformers_bert():
+    bert = TransformersBert()
     bert.init_bert_model(20)
     
     return bert
 
 @pytest.fixture(scope="session")
-def test_transfomers_tokenizer():
-    tokenizer = TransfomersTokenizer()
+def test_transformers_tokenizer():
+    tokenizer = TransformersTokenizer()
     
     return tokenizer
 

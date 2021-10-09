@@ -8,7 +8,7 @@ import shutil
 import glob
 import numpy as np
 import pandas as pd
-from transfomersbert import TransfomersBert, TransfomersTokenizer
+from transformersbert import TransformersBert, TransformersTokenizer
 
 class TestKeiyakuModel:
     @pytest.fixture(scope="class")
@@ -19,9 +19,9 @@ class TestKeiyakuModel:
 
         shutil.rmtree(tmpdir_path)
 
-    def test_init_model(self, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer, 10, 11)
-        keiyaku_model.init_model(test_transfomers_bert)
+    def test_init_model(self, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer, 10, 11)
+        keiyaku_model.init_model(test_transformers_bert)
         
         assert keiyaku_model.seq_len == 20
         assert keiyaku_model.output_class1_num == 10
@@ -34,12 +34,12 @@ class TestKeiyakuModel:
         assert K.int_shape(keiyaku_model.model.outputs[0]) == (None, 1)
         assert K.int_shape(keiyaku_model.model.outputs[1]) == (None, 10)
 
-    def test_generate_data(self, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer):
-        sepidx = test_transfomers_tokenizer.get_sep_idx()
+    def test_generate_data(self, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer):
+        sepidx = test_transformers_tokenizer.get_sep_idx()
         datas = [([10, 11, 12, 13], 0, 3, 2), ([11, 11, sepidx, 13], 1, 4, 3), ([2, 1, 2, 3], 2, 5, 4)]
 
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
-        keiyaku_model.init_model(test_transfomers_bert)
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
+        keiyaku_model.init_model(test_transformers_bert)
 
         loop_num = 0
         for x, y in keiyaku_model._generator_data(datas, 2):
@@ -68,16 +68,16 @@ class TestKeiyakuModel:
             if loop_num > 3:
                 break
 
-    def test_get_learn_rate(self, test_transfomers_tokenizer: TransfomersTokenizer):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
+    def test_get_learn_rate(self, test_transformers_tokenizer: TransformersTokenizer):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
 
         assert keiyaku_model._get_learn_rate(keiyaku_model.learn_rate_epoch-1) == keiyaku_model.learn_rate_init
         assert keiyaku_model._get_learn_rate(keiyaku_model.learn_rate_epoch) == keiyaku_model.learn_rate_init * keiyaku_model.learn_rate_percent
         assert keiyaku_model._get_learn_rate(keiyaku_model.learn_rate_epoch*2-1) == keiyaku_model.learn_rate_init * keiyaku_model.learn_rate_percent
         assert keiyaku_model._get_learn_rate(keiyaku_model.learn_rate_epoch*2) == keiyaku_model.learn_rate_init * keiyaku_model.learn_rate_percent * keiyaku_model.learn_rate_percent
 
-    def test_get_callbacks(self, test_transfomers_tokenizer: TransfomersTokenizer, tmpsave_dir):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
+    def test_get_callbacks(self, test_transformers_tokenizer: TransformersTokenizer, tmpsave_dir):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
 
         callbacks = keiyaku_model._get_callbacks(tmpsave_dir)
         assert len(callbacks) == 3
@@ -85,11 +85,11 @@ class TestKeiyakuModel:
         assert type(callbacks[1]) is KeiyakuModel.ResultOutputCallback
         assert type(callbacks[2]) is tf.keras.callbacks.LearningRateScheduler
 
-    def test_train_model(self, test_keiyakudata: KeiyakuData, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer, tmpsave_dir):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
-        keiyaku_model.init_model(test_transfomers_bert)
+    def test_train_model(self, test_keiyakudata: KeiyakuData, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer, tmpsave_dir):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
+        keiyaku_model.init_model(test_transformers_bert)
         
-        datas = test_keiyakudata.get_study_group_datas(test_transfomers_tokenizer, 10)
+        datas = test_keiyakudata.get_study_group_datas(test_transformers_tokenizer, 10)
         keiyaku_model.train_model(datas, 2, tmpsave_dir)
 
         assert len(glob.glob(os.path.join(tmpsave_dir, "model_summary.txt"))) == 1
@@ -103,22 +103,22 @@ class TestKeiyakuModel:
         df = pd.read_csv(os.path.join(tmpsave_dir, "result.csv"), sep=',')
         assert df.shape == (2, 39)
        
-    def test_load_weight(self, mocker, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
-        keiyaku_model.init_model(test_transfomers_bert)
+    def test_load_weight(self, mocker, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
+        keiyaku_model.init_model(test_transformers_bert)
         
         load_weights_mock = mocker.spy(keiyaku_model.model, "load_weights")
 
         test_dir = os.path.join(os.path.dirname(__file__), r"data")    
-        keiyaku_model.load_weight(os.path.join(test_dir, "test_transfomers_weights"))
+        keiyaku_model.load_weight(os.path.join(test_dir, "test_transformers_weights"))
         
-        load_weights_mock.assert_called_once_with(os.path.join(test_dir, "test_transfomers_weights"))
+        load_weights_mock.assert_called_once_with(os.path.join(test_dir, "test_transformers_weights"))
     
-    def test_predict(self, test_keiyakudata: KeiyakuData, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
-        keiyaku_model.init_model(test_transfomers_bert)
+    def test_predict(self, test_keiyakudata: KeiyakuData, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
+        keiyaku_model.init_model(test_transformers_bert)
         
-        datas = test_keiyakudata.get_group_datas(test_transfomers_tokenizer, keiyaku_model.seq_len)
+        datas = test_keiyakudata.get_group_datas(test_transformers_tokenizer, keiyaku_model.seq_len)
         results = keiyaku_model.predict(datas)
         
         assert len(results[0]) == len(datas)
@@ -128,19 +128,19 @@ class TestKeiyakuModel:
         for result in results[1]:
             assert len(result) == 6
 
-    def test_data_check(self, test_keiyakudata: KeiyakuData, test_transfomers_bert: TransfomersBert, test_transfomers_tokenizer: TransfomersTokenizer):
-        keiyaku_model = KeiyakuModel(test_transfomers_tokenizer)
-        keiyaku_model.init_model(test_transfomers_bert)
+    def test_data_check(self, test_keiyakudata: KeiyakuData, test_transformers_bert: TransformersBert, test_transformers_tokenizer: TransformersTokenizer):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer)
+        keiyaku_model.init_model(test_transformers_bert)
         keiyaku_model.seq_len = 102
 
         datas = test_keiyakudata.get_datas()
         text_bef = datas[7][6]
         text_aft = datas[8][6]
 
-        groups = test_keiyakudata.get_group_datas(test_transfomers_tokenizer, 256)
+        groups = test_keiyakudata.get_group_datas(test_transformers_tokenizer, 256)
         group = groups[8]
 
-        encoded = test_transfomers_tokenizer.encode(text_aft, text_bef)
+        encoded = test_transformers_tokenizer.encode(text_aft, text_bef)
         result = None
         for x, y in keiyaku_model._generator_data([group], 1):
             result = x

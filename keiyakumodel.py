@@ -3,13 +3,11 @@ import pandas as pd
 import random
 import os
 import tensorflow as tf
-import tensorflow.keras.backend as K
-from keiyakudata import KeiyakuData
 from kerasscore import KerasScore
-from transfomersbert import TransfomersBert, TransfomersTokenizer
+from transformersbert import TransformersBert, TransformersTokenizer
 
 class KeiyakuModel:
-    def __init__(self, tokenizer: TransfomersTokenizer, output_class1_num=6, output_class2_num=7):
+    def __init__(self, tokenizer: TransformersTokenizer, output_class1_num=6, output_class2_num=7):
         self.bert_model = None
         self.model = None
         self.tokenizer = tokenizer
@@ -38,7 +36,7 @@ class KeiyakuModel:
             KerasScore(KerasScore.TYPE_RECALL, self.output_class1_num), KerasScore(KerasScore.TYPE_FVALUE, self.output_class1_num)],
             ]
 
-    def init_model(self, bert: TransfomersBert):
+    def init_model(self, bert: TransformersBert):
         self.seq_len = bert.seq_len
         self.bert_model = bert
 

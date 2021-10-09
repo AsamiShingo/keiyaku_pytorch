@@ -1,15 +1,15 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transfomersbert import TransfomersBert, TransfomersTokenizer
+from transformersbert import TransformersBert, TransformersTokenizer
 import numpy as np
 
 keiyakudata_path = r".\data\keiyakudata.csv"
-keiyakuweight_path = r".\data\transfomers_weights"
+keiyakuweight_path = r".\data\transformers_weights"
 score_threshold = 0.5
 seq_len = 256
 
-tokenizer = TransfomersTokenizer()
-bert = TransfomersBert()
+tokenizer = TransformersTokenizer()
+bert = TransformersBert()
 bert.init_bert_model(seq_len)
 
 model = KeiyakuModel(tokenizer)
