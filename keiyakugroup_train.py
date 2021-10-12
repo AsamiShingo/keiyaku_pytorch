@@ -1,27 +1,27 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transformersbert import TransformersBert, TransformersTokenizer
+import transformersroberta
 import os
 import datetime
 
 starttime=datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
 keiyakudata_path = r".\data\keiyakudata.csv"
+modeldata_path = r".\data\model"
 save_dir = r".\savedir"
 epoch_num = 20
-seq_len = 256
 
-tokenizer = TransformersTokenizer()
-bert = TransformersBert()
-bert.init_bert_model(seq_len)
+model = transformersroberta.TransformersRoberta()
+tokenizer = transformersroberta.TransformersTokenizerRoberta()
+keiyakumodel = KeiyakuModel(tokenizer)
 
-model = KeiyakuModel(tokenizer)
-model.init_model(bert)
-model.learn_rate_init = 0.0001
+model.init_model(modeldata_path)
+tokenizer.init_tokenizer(modeldata_path)
+keiyakumodel.init_model(model)
 
 keiyakudata = KeiyakuData(keiyakudata_path)
 datas = keiyakudata.get_study_group_datas(tokenizer, model.seq_len)
 
-save_dir = os.path.join(save_dir, starttime)
-model.train_model(datas, epoch_num, save_dir)
+save_dir = os.path.join(save_dir, starttime + "_" + model.model_name)
+keiyakumodel.train_model(datas, epoch_num, save_dir)
 

@@ -4,17 +4,16 @@ import random
 import os
 import tensorflow as tf
 from kerasscore import KerasScore
-from transformersbert import TransformersBert, TransformersTokenizer
+from transformersbase import TransformersBase, TransformersTokenizerBase
 
 class KeiyakuModel:
-    def __init__(self, tokenizer: TransformersTokenizer, output_class1_num=6, output_class2_num=7):
+    def __init__(self, tokenizer: TransformersTokenizerBase, output_class1_num=6):
         self.bert_model = None
         self.model = None
         self.tokenizer = tokenizer
         
         self.seq_len = 0
         self.output_class1_num = output_class1_num
-        self.output_class2_num = output_class2_num
 
         #学習設定
         self.train_data_split = 0.8
@@ -36,15 +35,15 @@ class KeiyakuModel:
             KerasScore(KerasScore.TYPE_RECALL, self.output_class1_num), KerasScore(KerasScore.TYPE_FVALUE, self.output_class1_num)],
             ]
 
-    def init_model(self, bert: TransformersBert):
+    def init_model(self, bert: TransformersBase):
         self.seq_len = bert.seq_len
         self.bert_model = bert
 
-        bert_layer = self.bert_model.get_output_layer()
+        bert_layer = self.bert_model.get_transformers_output()
         output_tensor = tf.keras.layers.Dropout(0.5)(bert_layer)
         output_tensor1 = tf.keras.layers.Dense(1, activation='sigmoid', name="output1")(output_tensor)
         output_tensor2 = tf.keras.layers.Dense(self.output_class1_num, activation='softmax', name="output2")(output_tensor)
-        self.model = tf.keras.models.Model(self.bert_model.get_inputs_base(), [output_tensor1, output_tensor2])
+        self.model = tf.keras.models.Model(self.bert_model.get_inputs(), [output_tensor1, output_tensor2])
 
     def load_weight(self, weight_path):
         self.model.load_weights(weight_path)
@@ -149,26 +148,25 @@ class KeiyakuModel:
         return callbacks
 
     def _generator_data(self, all_datas, batch_size):
-        pad_idx = self.tokenizer.get_pad_idx()
-        
+        dummy_inputs = self.tokenizer.keiyaku_encode(all_datas[0][0], self.seq_len)
+        input_num = len(dummy_inputs)
+
         while True:
             for step in range(len(all_datas) // batch_size):
                 datas = all_datas[step*batch_size:(step+1)*batch_size]
 
-                x_out1 = np.zeros((batch_size, self.seq_len), dtype=np.int32)
-                x_out2 = np.zeros((batch_size, self.seq_len), dtype=np.int32)
+                x_outs = [ np.zeros((batch_size, self.seq_len), dtype=np.int32) for _ in range(input_num)]
                 y_out1 = np.zeros((batch_size,))
                 y_out2 = np.zeros((batch_size, self.output_class1_num))
 
                 for i in range(batch_size):
-                    x1_min = min(self.seq_len, len(datas[i][0]))
+                    datas_inputs = self.tokenizer.keiyaku_encode(datas[i][0], self.seq_len)
+                    datas_outputs = datas[i][1]
 
-                    x_out1[i, :x1_min] = datas[i][0][:x1_min]
-                    y_out1[i] = datas[i][1]
-                    y_out2[i, :] = tf.keras.utils.to_categorical(datas[i][2], num_classes=self.output_class1_num)
+                    for j, datas_input in enumerate(datas_inputs):
+                        x_outs[j][i, :] = datas_input[:]
 
-                    for j in range(x1_min):
-                        if datas[i][0][j] != pad_idx:
-                            x_out2[i, j] = 1
+                    y_out1[i] = datas_outputs[0]
+                    y_out2[i, :] = tf.keras.utils.to_categorical(datas_outputs[1], num_classes=self.output_class1_num)
                         
-                yield [x_out1, x_out2], [y_out1, y_out2]
+                yield x_outs, [y_out1, y_out2]

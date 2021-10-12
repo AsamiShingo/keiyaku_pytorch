@@ -1,20 +1,23 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transformersbert import TransformersBert, TransformersTokenizer
+import transformersroberta
 import numpy as np
 
 keiyakudata_path = r".\data\keiyakudata.csv"
-keiyakuweight_path = r".\data\transformers_weights"
+modeldata_path = r".\data\model"
+save_dir = r".\savedir"
 score_threshold = 0.5
-seq_len = 256
 
-tokenizer = TransformersTokenizer()
-bert = TransformersBert()
-bert.init_bert_model(seq_len)
+model = transformersroberta.TransformersRoberta()
+tokenizer = transformersroberta.TransformersTokenizerRoberta()
+keiyakumodel = KeiyakuModel(tokenizer)
 
-model = KeiyakuModel(tokenizer)
-model.init_model(bert)
-model.load_weight(keiyakuweight_path)
+model.init_model(modeldata_path)
+tokenizer.init_tokenizer(modeldata_path)
+keiyakumodel.init_model(model)
+
+weight_path = r".\data\model\{}\weights".format(model.model_name)
+keiyakumodel.load_weight(weight_path)
 
 keiyakudata = KeiyakuData(keiyakudata_path)
 datas = keiyakudata.get_datas()
@@ -26,7 +29,7 @@ bef_file = ""
 for i in range(0, len(datas), 1000):
     targets = datas[i:i+1000]
     predict_targets = predict_datas[i:i+1000]
-    scores = model.predict(predict_targets)
+    scores = keiyakumodel.predict(predict_targets)
 
     for target, score1, score2 in zip(targets, scores[0], scores[1]):
         file = target[0]

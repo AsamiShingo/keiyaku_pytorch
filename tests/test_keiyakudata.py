@@ -1,6 +1,5 @@
 import pytest
 import shutil
-from transformersbert import TransformersTokenizer
 from keiyakudata import KeiyakuData
 
 class TestKeiyakuData:
@@ -46,17 +45,11 @@ class TestKeiyakuData:
 
         shutil.rmtree(tmpdir_path)
 
-    """
-    エラー用契約文章データを読みこむ場合、エラーとなること
-    """
     def test_init_error(self, keiyaku_file_error):
         with pytest.raises(ValueError):
             KeiyakuData(keiyaku_file_error)
 
-    """
-    コンストラクタ
-    ヘッダが想定通りであること(グループ判定が追加されている)
-    """
+
     def test_get_header(self, keiyaku_file):
         keiyaku_data = KeiyakuData(keiyaku_file)
 
@@ -73,13 +66,6 @@ class TestKeiyakuData:
         assert datas[7] == "前文章"
         assert datas[8] == "グループ判定"
 
-    """
-    get_datas
-    契約文章データにある列の情報は変わらないこと
-    グループ判定は下記の条件であること
-    ・"カテゴリ"か"文章グループ"に値が無い場合は-1
-    ・1行前のデータと"ファイル"、"カテゴリ"、"文章グループ"が同じ場合は1、違えば0
-    """
     def test_get_datas(self, keiyaku_file):
         keiyaku_data = KeiyakuData(keiyaku_file)
 
@@ -111,46 +97,31 @@ class TestKeiyakuData:
         assert datas[8][8] == 1
         assert datas[9][8] == 0
 
-    """
-    get_group_datas
-    [CLS]+"前文章"+[SEP]+"文章"のID化したリスト、グループ判定値の2列の値が取得できること
-    """
-    def test_get_group_datas(self, test_keiyakudata: KeiyakuData, test_transformers_tokenizer: TransformersTokenizer):
-        datas = test_keiyakudata.get_group_datas(test_transformers_tokenizer, 16)
+    def test_get_group_datas(self, test_keiyakudata: KeiyakuData, mocker):
+        tokenizer_mock = mocker.MagicMock()
+        tokenizer_mock.get_keiyaku_indexes = mocker.Mock(return_value=[1, 2, 3, 4, 5, 6, 7, 8])
+        
+        datas = test_keiyakudata.get_group_datas(tokenizer_mock, 8)
 
         assert len(datas) == 1136
-        assert len(datas[0]) == 4
+        assert len(datas[0]) == 2
+        assert len(datas[0][1]) == 3
         for data in datas:
-            assert len(data[0]) <= 16
-            assert data[1] == -1 or data[1] == 0 or data[1] == 1
-            assert -1 <= data[2] and data[2] <= 5
-            assert -1 <= data[3] and data[3] <= 6
+            assert data[0] == [1, 2, 3, 4, 5, 6, 7, 8]
+            assert data[1][0] == -1 or data[1][0] == 0 or data[1][0] == 1
+            assert -1 <= data[1][1] and data[1][1] <= 5
+            assert -1 <= data[1][2] and data[1][2] <= 6
 
-    def test_get_group_datas_word(self, test_keiyakudata: KeiyakuData, mocker):
-        sp_mock = mocker.MagicMock()
-        sp_mock.get_cls_idx = mocker.Mock(return_value=100)
-        sp_mock.get_sep_idx = mocker.Mock(return_value=101)
-        sp_mock.get_indexes = mocker.Mock(return_value=list(range(10)))
-
-        datas = test_keiyakudata.get_group_datas(sp_mock, 14)
-        # assert datas[0][0] == [100, 0, 1, 8, 9, 101, 0, 1, 8, 9, 101]
-        assert datas[0][0] == [0, 1, 8, 9, 101, 0, 1, 8, 9, 101]
-
-        datas = test_keiyakudata.get_group_datas(sp_mock, 43)
-        # assert datas[0][0] == [100, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 101, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 101]
-        assert datas[0][0] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 101, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 101]
-
-    """
-    get_study_group_datas
-     [CLS]+"前文章"+[SEP]+"文章"のID化したリスト、グループ判定値でグループ判定値が-1以外のデータが取得できること
-    """
-    def test_get_study_group_datas(self, test_keiyakudata: KeiyakuData, test_transformers_tokenizer: TransformersTokenizer):
-        datas = test_keiyakudata.get_study_group_datas(test_transformers_tokenizer, 16)
+    def test_get_study_group_datas(self, test_keiyakudata: KeiyakuData, mocker):
+        tokenizer_mock = mocker.MagicMock()
+        tokenizer_mock.get_keiyaku_indexes = mocker.Mock(return_value=[1, 2, 3, 4, 5, 6, 7, 8])
+        datas = test_keiyakudata.get_study_group_datas(tokenizer_mock, 16)
 
         assert len(datas) == 299
-        assert len(datas[0]) == 4
+        assert len(datas[0]) == 2
+        assert len(datas[0][1]) == 3
         for data in datas:
-            assert len(data[0]) <= 16
-            assert data[1] == 0 or data[1] == 1
-            assert 0 <= data[2] and data[2] <= 5
-            assert 0 <= data[3] and data[3] <= 6
+            assert data[0] == [1, 2, 3, 4, 5, 6, 7, 8]
+            assert data[1][0] == -1 or data[1][0] == 0 or data[1][0] == 1
+            assert -1 <= data[1][1] and data[1][1] <= 5
+            assert -1 <= data[1][2] and data[1][2] <= 6

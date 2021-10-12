@@ -1,5 +1,5 @@
 import pandas as pd
-from transformersbert import TransformersTokenizer
+from transformersbase import TransformersTokenizerBase
 
 class KeiyakuData:
     _CSV_HEADER_CHECK = ["ファイル", "行数", "カテゴリ", "文章グループ", "分類", "条文分類", "文章"]
@@ -23,29 +23,18 @@ class KeiyakuData:
     def get_datas(self):
         return self.df.values
 
-    def get_group_datas(self, tokenizer: TransformersTokenizer, seq_num):
-        sep_idx = tokenizer.get_sep_idx()
-        cut_len = int((seq_num - 3)/2)
-        cut_len_herf = int(cut_len / 2)
-
+    def get_group_datas(self, tokenizer: TransformersTokenizerBase, seq_len):
         group_datas = []
         for data in self.get_datas():
-            now_text_idx = tokenizer.get_indexes(data[6])
-            bef_text_idx = tokenizer.get_indexes(data[7])
-
-            if len(now_text_idx) > cut_len:
-                now_text_idx = now_text_idx[:cut_len_herf] + now_text_idx[-cut_len_herf:]
-
-            if len(bef_text_idx) > cut_len:
-                bef_text_idx = bef_text_idx[:cut_len_herf] + bef_text_idx[-cut_len_herf:]
-
-            group_datas.append((now_text_idx + [sep_idx] + bef_text_idx + [sep_idx], data[8], data[4], data[5]))
+            input_ids = tokenizer.get_keiyaku_indexes(data[6], data[7], seq_len)
+            outputs = [ data[8], data[4], data[5] ]
+            group_datas.append((input_ids, outputs))
 
         return group_datas
 
-    def get_study_group_datas(self, tokenizer: TransformersTokenizer, seq_num):
-        group_datas = self.get_group_datas(tokenizer, seq_num)
-        return list(filter(lambda x: x[1] != -1 and x[2] != -1, group_datas))
+    def get_study_group_datas(self, tokenizer: TransformersTokenizerBase, seq_len):
+        group_datas = self.get_group_datas(tokenizer, seq_len)
+        return list(filter(lambda x: x[1][0] != -1 and x[1][1] != -1, group_datas))
 
     def __data_group_set(self, df):
         df["前文章"] = ""
