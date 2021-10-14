@@ -2,11 +2,8 @@ import pytest
 import tensorflow as tf
 from keras_bert.backend import backend as K
 from keiyakumodel import KeiyakuModel
-from keiyakudata import KeiyakuData
 import os
 import shutil
-import glob
-import numpy as np
 import pandas as pd
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
@@ -93,6 +90,19 @@ class TestKeiyakuModel:
         assert type(callbacks[0]) is tf.keras.callbacks.ModelCheckpoint
         assert type(callbacks[1]) is KeiyakuModel.ResultOutputCallback
         assert type(callbacks[2]) is tf.keras.callbacks.LearningRateScheduler
+
+    def test_callback_create_graph(self, tmpsave_dir):
+        df = pd.DataFrame(columns=["epoch", "output1", "output2", "output3", "output4"])
+        df = df.append(pd.Series([1, 0.00, 0.25, 0.8, 1], index = ["epoch", "output1", "output2", "output3", "output4"]), ignore_index = True)
+        df = df.append(pd.Series([2, 0.25, 0.25, 0.7, 3], index = ["epoch", "output1", "output2", "output3", "output4"]), ignore_index = True)
+        df = df.append(pd.Series([3, 0.50, 0.5, 0.6, 2], index = ["epoch", "output1", "output2", "output3", "output4"]), ignore_index = True)
+        df = df.append(pd.Series([4, 0.75, 0.5, 0.5, 1], index = ["epoch", "output1", "output2", "output3", "output4"]), ignore_index = True)
+        df = df.append(pd.Series([5, 1.00, 0.5, 0.4, 0], index = ["epoch", "output1", "output2", "output3", "output4"]), ignore_index = True)
+
+        filepath = os.path.join(tmpsave_dir, "test.png")
+        callback = KeiyakuModel.ResultOutputCallback(tmpsave_dir)
+        callback._create_graph("title", df, "epoch", ["output1", "output2", "output3"], ["output4"], filepath)
+        assert os.path.exists(filepath) == True
 
 
 

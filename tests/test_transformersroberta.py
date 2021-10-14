@@ -102,9 +102,11 @@ class TestRoberta:
         assert len(glob.glob(os.path.join(tmpdir, "weights_last-*.index"))) == 1
         assert len(glob.glob(os.path.join(tmpdir, "weights_001-*.data-*"))) == 1
         assert len(glob.glob(os.path.join(tmpdir, "weights_001-*.index"))) == 1
-        assert len(glob.glob(os.path.join(tmpdir, "result.csv"))) == 1
+        assert len(glob.glob(os.path.join(tmpdir, "result_data.csv"))) == 1
+        assert len(glob.glob(os.path.join(tmpdir, "result_graph1.png"))) == 1
+        assert len(glob.glob(os.path.join(tmpdir, "result_graph2.png"))) == 1
 
-        df = pd.read_csv(os.path.join(tmpdir, "result.csv"), sep=',')
+        df = pd.read_csv(os.path.join(tmpdir, "result_data.csv"), sep=',')
         assert df.shape == (2, 39)
 
         weight_path = glob.glob(os.path.join(tmpdir, "weights_last-*.data-*"))[0]

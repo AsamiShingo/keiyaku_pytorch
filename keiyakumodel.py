@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import os
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from kerasscore import KerasScore
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
@@ -122,14 +123,48 @@ class KeiyakuModel:
 
         def __init__(self, save_dir):
             self.df = pd.DataFrame(columns=self.SAVE_ROWS)
-            self.save_csv = os.path.join(save_dir, "result.csv")
+            self.save_dir = save_dir
+            self.save_csv = os.path.join(self.save_dir, "result_data.csv")
 
         def on_epoch_end(self, epoch, logs={}):
-
             values = [epoch+1] + [logs[key] for key in self.SAVE_ROWS if key != "epoch" and key in logs]
 
             self.df = self.df.append(pd.Series(values, index = self.SAVE_ROWS), ignore_index = True)
             self.df.to_csv(self.save_csv, index = False)
+
+        def on_train_end(self, logs={}):
+            self._create_graph("文章グループ化", self.df, "epoch", ["val_output1_fvalue", "val_output1_precision", "val_output1_recall"], ["output1_loss", "val_output1_loss"], os.path.join(self.save_dir, "result_graph1.png"))
+            self._create_graph("文章分類", self.df, "epoch", ["val_output2_fvalue", "val_output2_precision", "val_output2_recall"], ["output2_loss", "val_output2_loss"], os.path.join(self.save_dir, "result_graph2.png"))
+        
+        def _create_graph(self, title, datas, xlabel, ylabels1, ylabels2, savefile):
+            xvalue = datas[xlabel].values
+            yvalues1 = [ datas[label].values for label in ylabels1 ]
+            yvalues2 = [ datas[label].values for label in ylabels2 ]
+            
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1, 1, 1)
+            ax2 = ax1.twinx()
+
+            for yvalue, ylabel in zip(yvalues1, ylabels1):
+                ax1.plot(xvalue, yvalue, marker='*', label=ylabel)
+
+            for yvalue, ylabel in zip(yvalues2, ylabels2):
+                ax2.plot(xvalue, yvalue, marker='o', label=ylabel)
+
+            ax1.set_ylim(0, 1)
+            ax1.set_yticks(np.arange(0, 1.01, step=0.1))
+            handler1, label1 = ax1.get_legend_handles_labels()
+
+            ax2.set_ylim(0, 1.5)
+            ax2.set_yticks(np.arange(0, 1.51, step=0.1))
+            handler2, label2 = ax2.get_legend_handles_labels()
+
+            ax1.set_title(title)
+            ax1.set_xticks(xvalue)
+            ax1.legend(handler1 + handler2, label1 + label2, loc='upper left', borderaxespad=0.)
+            
+            plt.savefig(savefile)
+
 
     def _get_callbacks(self, save_dir):
         callbacks = []
