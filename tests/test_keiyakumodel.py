@@ -1,7 +1,7 @@
 import pytest
 import tensorflow as tf
-from keras_bert.backend import backend as K
 from keiyakumodel import KeiyakuModel
+import tensorflow.keras.backend as K
 import os
 import shutil
 import pandas as pd
@@ -103,7 +103,3 @@ class TestKeiyakuModel:
         callback = KeiyakuModel.ResultOutputCallback(tmpsave_dir)
         callback._create_graph("title", df, "epoch", ["output1", "output2", "output3"], ["output4"], filepath)
         assert os.path.exists(filepath) == True
-
-
-
-    

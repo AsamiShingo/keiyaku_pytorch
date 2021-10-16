@@ -2,8 +2,7 @@ import pytest
 import glob
 import os
 import pandas as pd
-from tensorflow.python.distribute.distribution_strategy_context import in_cross_replica_context
-from keras_bert.backend import backend as K
+import tensorflow.keras.backend as K
 from keiyakumodel import KeiyakuModel
 from keiyakudata import KeiyakuData
 from transformersroberta import TransformersRoberta, TransformersTokenizerRoberta

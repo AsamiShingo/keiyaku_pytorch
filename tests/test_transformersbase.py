@@ -1,6 +1,6 @@
 import pytest
 import transformers
-from keras_bert.backend import backend as K
+import tensorflow.keras.backend as K
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
 class TestTransformersBase:
