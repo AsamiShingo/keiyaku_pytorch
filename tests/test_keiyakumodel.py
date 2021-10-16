@@ -5,6 +5,7 @@ import tensorflow.keras.backend as K
 import os
 import shutil
 import pandas as pd
+import json
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
 class TestKeiyakuModel:
@@ -103,3 +104,26 @@ class TestKeiyakuModel:
         callback = KeiyakuModel.ResultOutputCallback(tmpsave_dir)
         callback._create_graph("title", df, "epoch", ["output1", "output2", "output3"], ["output4"], filepath)
         assert os.path.exists(filepath) == True
+
+    def test_callback_create_paramfile(self, test_transformers_empty: TransformersBase, test_transformers_tokenizer_empty: TransformersTokenizerBase, tmpsave_dir):
+        keiyaku_model = KeiyakuModel(test_transformers_tokenizer_empty)
+        keiyaku_model.init_model(test_transformers_empty)
+
+        filepath = os.path.join(tmpsave_dir, "test.json")
+        keiyaku_model._create_paramfile(filepath)
+        assert os.path.exists(filepath) == True
+
+        with open(filepath, 'r') as file:
+            jsondata = json.load(file)
+            assert jsondata["batch_size"] == keiyaku_model.batch_size
+            assert jsondata["seq_len"] == keiyaku_model.seq_len
+            assert jsondata["learn_rate_init"] == keiyaku_model.learn_rate_init
+            assert jsondata["learn_rate_epoch"] == keiyaku_model.learn_rate_epoch
+            assert jsondata["learn_rate_percent"] == keiyaku_model.learn_rate_percent
+
+
+
+
+        
+
+

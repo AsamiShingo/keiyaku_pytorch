@@ -4,6 +4,7 @@ import random
 import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import json
 from kerasscore import KerasScore
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
@@ -93,6 +94,7 @@ class KeiyakuModel:
             steps=test_steps_per_epoch, batch_size=self.batch_size, verbose=2)
 
         self.model.save_weights(os.path.join(save_dir, 'weights_last-{:.2f}'.format(testscore[0])))
+        self._create_paramfile(os.path.join(save_dir, 'parameter.json'))
 
     def predict(self, datas):
         steps_per_epoch = (len(datas) // self.batch_size)
@@ -207,3 +209,13 @@ class KeiyakuModel:
                     y_out2[i, :] = tf.keras.utils.to_categorical(datas_outputs[1], num_classes=self.output_class1_num)
                         
                 yield x_outs, [y_out1, y_out2]
+
+    def _create_paramfile(self, savefile):
+        with open(savefile, "w", encoding="utf-8") as f:
+            data = {}
+            data["batch_size"] = self.batch_size
+            data["seq_len"] = self.seq_len
+            data["learn_rate_init"] = self.learn_rate_init
+            data["learn_rate_epoch"] = self.learn_rate_epoch
+            data["learn_rate_percent"] = self.learn_rate_percent
+            json.dump(data, f, ensure_ascii=False, indent=4)
