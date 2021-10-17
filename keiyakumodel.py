@@ -4,6 +4,7 @@ import random
 import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import japanize_matplotlib
 import json
 from kerasscore import KerasScore
 from transformersbase import TransformersBase, TransformersTokenizerBase
