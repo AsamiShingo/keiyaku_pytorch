@@ -117,6 +117,7 @@ class TestKeiyakuModel:
             jsondata = json.load(file)
             assert jsondata["batch_size"] == keiyaku_model.batch_size
             assert jsondata["seq_len"] == keiyaku_model.seq_len
+            assert jsondata["pre_epoch"] == keiyaku_model.pre_epoch
             assert jsondata["learn_rate_init"] == keiyaku_model.learn_rate_init
             assert jsondata["learn_rate_epoch"] == keiyaku_model.learn_rate_epoch
             assert jsondata["learn_rate_percent"] == keiyaku_model.learn_rate_percent

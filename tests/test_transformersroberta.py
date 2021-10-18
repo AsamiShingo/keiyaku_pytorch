@@ -85,9 +85,11 @@ class TestRoberta:
 
             assert keiyaku_encode == encode
 
+    @pytest.mark.skip(reason='heavy test')
     def test_train_predict(self, test_transformers_roberta: TransformersRoberta, test_transformers_tokenizer_roberta: TransformersTokenizerRoberta, test_keiyakudata: KeiyakuData, tmpdir):
         model = KeiyakuModel(test_transformers_tokenizer_roberta)
         model.init_model(test_transformers_roberta)
+        model.pre_epoch = 1
 
         assert model.seq_len == 20
         assert model.output_class1_num == 6

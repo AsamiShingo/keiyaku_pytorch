@@ -88,10 +88,12 @@ class TestBert:
 
             assert keiyaku_encode == encode
 
+    @pytest.mark.skip(reason='heavy test')
     def test_train_predict(self, test_transformers_bert: TransformersBert, test_transformers_tokenizer_bert: TransformersTokenizerBert, test_keiyakudata: KeiyakuData, tmpdir):
         model = KeiyakuModel(test_transformers_tokenizer_bert)
         model.init_model(test_transformers_bert)
-
+        model.pre_epoch = 1
+        
         assert model.seq_len == 20
         assert model.output_class1_num == 6
 

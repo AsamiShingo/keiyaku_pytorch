@@ -19,6 +19,7 @@ class KeiyakuModel:
         self.output_class1_num = output_class1_num
 
         #学習設定
+        self.pre_epoch = 5
         self.train_data_split = 0.8
         self.batch_size = 20
         self.learn_rate_init= 0.0001
@@ -79,7 +80,7 @@ class KeiyakuModel:
         self.model.fit(self._generator_data(train_datas, self.batch_size), 
             validation_data=self._generator_data(test_datas, self.batch_size),
             steps_per_epoch=train_steps_per_epoch, validation_steps=test_steps_per_epoch,
-            batch_size=self.batch_size, epochs=5)
+            batch_size=self.batch_size, epochs=self.pre_epoch)
 
         #モデル学習(全体)
         self.bert_model.set_trainable(True)
@@ -216,6 +217,7 @@ class KeiyakuModel:
             data = {}
             data["batch_size"] = self.batch_size
             data["seq_len"] = self.seq_len
+            data["pre_epoch"] = self.pre_epoch
             data["learn_rate_init"] = self.learn_rate_init
             data["learn_rate_epoch"] = self.learn_rate_epoch
             data["learn_rate_percent"] = self.learn_rate_percent
