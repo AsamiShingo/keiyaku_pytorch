@@ -56,7 +56,7 @@ class TestRoberta:
         def test_convert_vocabs(self, test_transformers_tokenizer_roberta: TransformersTokenizerRoberta):
             indata = ["▁TEST1", "▁TEST2", "TEST3", "TEST4▁", "TEST▁5"]
             expect = ["TEST1", "TEST2", "TEST3", "TEST4▁", "TEST▁5"]
-            convert_vocabs = test_transformers_tokenizer_roberta.convert_vocabs(indata)
+            convert_vocabs = test_transformers_tokenizer_roberta._convert_vocabs(indata)
             assert convert_vocabs == expect
             
         def test_get_keiyaku_indexes(self, test_transformers_tokenizer_roberta: TransformersTokenizerRoberta):
