@@ -1,15 +1,29 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
+import transformersbert
 import transformersroberta
 import numpy as np
+import sys
 
 keiyakudata_path = r".\data\keiyakudata.csv"
 modeldata_path = r".\data\model"
 save_dir = r".\savedir"
 score_threshold = 0.5
 
-model = transformersroberta.TransformersRoberta()
-tokenizer = transformersroberta.TransformersTokenizerRoberta()
+model_name = "roberta"
+if len(sys.argv) >= 2:
+    model_name = sys.argv[1]
+
+if model_name == "bert":
+    model = transformersbert.TransformersBert()
+    tokenizer = transformersbert.TransformersTokenizerBert()
+elif model_name == "roberta":
+    model = transformersroberta.TransformersRoberta()
+    tokenizer = transformersroberta.TransformersTokenizerRoberta()
+else:
+    print("model_name error(model_name={})".format(model_name))
+    sys.exit(9)
+    
 keiyakumodel = KeiyakuModel(tokenizer)
 
 model.init_model(modeldata_path)

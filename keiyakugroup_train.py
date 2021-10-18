@@ -1,8 +1,10 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
+import transformersbert
 import transformersroberta
 import os
 import datetime
+import sys
 
 starttime=datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
@@ -11,8 +13,20 @@ modeldata_path = r".\data\model"
 save_dir = r".\savedir"
 epoch_num = 20
 
-model = transformersroberta.TransformersRoberta()
-tokenizer = transformersroberta.TransformersTokenizerRoberta()
+model_name = "roberta"
+if len(sys.argv) >= 2:
+    model_name = sys.argv[1]
+
+if model_name == "bert":
+    model = transformersbert.TransformersBert()
+    tokenizer = transformersbert.TransformersTokenizerBert()
+elif model_name == "roberta":
+    model = transformersroberta.TransformersRoberta()
+    tokenizer = transformersroberta.TransformersTokenizerRoberta()
+else:
+    print("model_name error(model_name={})".format(model_name))
+    sys.exit(9)
+    
 keiyakumodel = KeiyakuModel(tokenizer)
 
 model.init_model(modeldata_path)
