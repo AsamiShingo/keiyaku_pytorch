@@ -1,4 +1,5 @@
 import transformersbert
+import transformersbertcolorful
 import transformersroberta
 import sys
 
@@ -13,6 +14,11 @@ if model_name == "bert":
     tokenizer = transformersbert.TransformersTokenizerBert()
     model.download_save("cl-tohoku/bert-base-japanese-v2", modeldata_path)
     tokenizer.download_save("cl-tohoku/bert-base-japanese-v2", modeldata_path)
+elif model_name == "bertcolorful":
+    model = transformersbertcolorful.TransformersBertColorful()
+    tokenizer = transformersbertcolorful.TransformersTokenizerBertColorful()
+    model.download_save("colorfulscoop/bert-base-ja", modeldata_path)
+    tokenizer.download_save("colorfulscoop/bert-base-ja", modeldata_path)
 elif model_name == "roberta":
     model = transformersroberta.TransformersRoberta()
     tokenizer = transformersroberta.TransformersTokenizerRoberta()

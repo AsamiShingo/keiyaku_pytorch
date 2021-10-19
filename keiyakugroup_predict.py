@@ -1,6 +1,7 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
 import transformersbert
+import transformersbertcolorful
 import transformersroberta
 import numpy as np
 import sys
@@ -17,6 +18,9 @@ if len(sys.argv) >= 2:
 if model_name == "bert":
     model = transformersbert.TransformersBert()
     tokenizer = transformersbert.TransformersTokenizerBert()
+elif model_name == "bertcolorful":
+    model = transformersbertcolorful.TransformersBertColorful()
+    tokenizer = transformersbertcolorful.TransformersTokenizerBertColorful()
 elif model_name == "roberta":
     model = transformersroberta.TransformersRoberta()
     tokenizer = transformersroberta.TransformersTokenizerRoberta()
