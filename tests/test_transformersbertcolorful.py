@@ -82,6 +82,12 @@ class TestBertColorful:
 
             assert keiyaku_encode == encode
 
+        def test_encode_decode(self, test_transformers_tokenizer_bertcolorful: TransformersTokenizerBertColorful):
+            sentence = "イギリスグループ運動"
+            encode = test_transformers_tokenizer_bertcolorful.get_indexes(sentence)
+            decode = test_transformers_tokenizer_bertcolorful.get_vocabs(encode)
+            assert "".join(decode) == sentence
+
     @pytest.mark.skip(reason='heavy test')
     def test_train_predict(self, test_transformers_bertcolorful: TransformersBertColorful, test_transformers_tokenizer_bertcolorful: TransformersTokenizerBertColorful, test_keiyakudata: KeiyakuData, tmpdir):
         model = KeiyakuModel(test_transformers_tokenizer_bertcolorful)

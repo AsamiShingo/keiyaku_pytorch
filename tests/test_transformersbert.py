@@ -88,6 +88,12 @@ class TestBert:
 
             assert keiyaku_encode == encode
 
+        def test_encode_decode(self, test_transformers_tokenizer_bert: TransformersTokenizerBert):
+            sentence = "私はこの本(実践機械学習)を読むのに8時間かかった。"
+            encode = test_transformers_tokenizer_bert.get_indexes(sentence)
+            decode = test_transformers_tokenizer_bert.get_vocabs(encode)
+            assert "".join(decode) == sentence
+
     @pytest.mark.skip(reason='heavy test')
     def test_train_predict(self, test_transformers_bert: TransformersBert, test_transformers_tokenizer_bert: TransformersTokenizerBert, test_keiyakudata: KeiyakuData, tmpdir):
         model = KeiyakuModel(test_transformers_tokenizer_bert)
