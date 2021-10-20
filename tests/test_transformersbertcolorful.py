@@ -83,7 +83,7 @@ class TestBertColorful:
             assert keiyaku_encode == encode
 
         def test_encode_decode(self, test_transformers_tokenizer_bertcolorful: TransformersTokenizerBertColorful):
-            sentence = "イギリスグループ運動"
+            sentence = "私はこの本(実践機械学習)を読むのに8時間かかった。"
             encode = test_transformers_tokenizer_bertcolorful.get_indexes(sentence)
             decode = test_transformers_tokenizer_bertcolorful.get_vocabs(encode)
             assert "".join(decode) == sentence
