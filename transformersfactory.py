@@ -1,4 +1,5 @@
 import os
+import threading
 from transformersbase import TransformersBase, TransformersTokenizerBase
 from transformersbert import TransformersBert, TransformersTokenizerBert
 from transformersbertcolorful import TransformersBertColorful, TransformersTokenizerBertColorful
@@ -20,6 +21,8 @@ class TransformersFactory:
     tokenizer: TransformersTokenizerBase = None
     model_full_name: str = ""
 
+    craete_transformers_mutex = threading.Lock()
+
     @classmethod
     def get_transfomers(cls, model_name=DEFAULT_MODEL_NAME, download=False):
         if model_name != cls.now_model_name or download == True:
@@ -38,19 +41,22 @@ class TransformersFactory:
 
     @classmethod
     def _craete_transformers(cls, model_name) -> None:
-        if model_name == cls.MODEL_NAME_BERT:
-            cls.model = TransformersBert()
-            cls.tokenizer = TransformersTokenizerBert()
-            cls.model_full_name = cls.MODEL_FULL_NAME_BERT
-        elif model_name == cls.MODEL_NAME_BERTCOLORFUL:
-            cls.model = TransformersBertColorful()
-            cls.tokenizer = TransformersTokenizerBertColorful()
-            cls.model_full_name = cls.MODEL_FULL_NAME_BERTCOLORFUL
-        elif model_name == cls.MODEL_NAME_ROBERTA:
-            cls.model = TransformersRoberta()
-            cls.tokenizer = TransformersTokenizerRoberta()
-            cls.model_full_name = cls.MODEL_FULL_NAME_ROBERTA
-        else:
-            raise NotImplementedError("model_name error(model_name={})".format(model_name))
+        cls.craete_transformers_mutex.acquire()
+        if model_name != cls.now_model_name:
+            if model_name == cls.MODEL_NAME_BERT:
+                cls.model = TransformersBert()
+                cls.tokenizer = TransformersTokenizerBert()
+                cls.model_full_name = cls.MODEL_FULL_NAME_BERT
+            elif model_name == cls.MODEL_NAME_BERTCOLORFUL:
+                cls.model = TransformersBertColorful()
+                cls.tokenizer = TransformersTokenizerBertColorful()
+                cls.model_full_name = cls.MODEL_FULL_NAME_BERTCOLORFUL
+            elif model_name == cls.MODEL_NAME_ROBERTA:
+                cls.model = TransformersRoberta()
+                cls.tokenizer = TransformersTokenizerRoberta()
+                cls.model_full_name = cls.MODEL_FULL_NAME_ROBERTA
+            else:
+                raise NotImplementedError("model_name error(model_name={})".format(model_name))
+        cls.craete_transformers_mutex.release()
 
 
