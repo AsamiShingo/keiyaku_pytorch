@@ -1,37 +1,20 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-import transformersbert
-import transformersbertcolorful
-import transformersroberta
+from transformersfactory import TransformersFactory
 import numpy as np
 import sys
 
 keiyakudata_path = r".\data\keiyakudata.csv"
-modeldata_path = r".\data\model"
 save_dir = r".\savedir"
 score_threshold = 0.5
 
-model_name = "roberta"
+model_name = ""
 if len(sys.argv) >= 2:
     model_name = sys.argv[1]
 
-if model_name == "bert":
-    model = transformersbert.TransformersBert()
-    tokenizer = transformersbert.TransformersTokenizerBert()
-elif model_name == "bertcolorful":
-    model = transformersbertcolorful.TransformersBertColorful()
-    tokenizer = transformersbertcolorful.TransformersTokenizerBertColorful()
-elif model_name == "roberta":
-    model = transformersroberta.TransformersRoberta()
-    tokenizer = transformersroberta.TransformersTokenizerRoberta()
-else:
-    print("model_name error(model_name={})".format(model_name))
-    sys.exit(9)
+model, tokenizer = TransformersFactory.get_transfomers(model_name)
     
 keiyakumodel = KeiyakuModel(tokenizer)
-
-model.init_model(modeldata_path)
-tokenizer.init_tokenizer(modeldata_path)
 keiyakumodel.init_model(model)
 
 weight_path = r".\data\model\{}\weights".format(model.model_name)
