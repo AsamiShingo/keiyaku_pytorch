@@ -1,0 +1,27 @@
+.grid.container {
+  margin-top:5em;
+}
+.inputfile {
+	width:0.1px;
+	height:0.1px;
+	opacity:0;
+	overflow:hidden;
+	position:absolute;
+	z-index:-1;
+}
+
+.th_no {
+	width:50px;
+}
+
+.th_button {
+	width:320px;
+}
+
+.td_no {
+	text-align:right
+}
+
+.td_button {
+	text-align:right;
+}

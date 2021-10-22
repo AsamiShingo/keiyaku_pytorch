@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<title>契約文章解析</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+		<link rel="stylesheet" href="https://unpkg.com/ress/dist/ress.min.css" />
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+		<link rel="stylesheet" href="static/css/main.css">
+		
+	</head>
+	<body>
+		<div class="ui container">
+			<h1>契約文章解析</h1>
+		</div>
+
+		<div class="ui container">
+			<form action="/upload" method="post" enctype="multipart/form-data">
+				<input type="file" (change)="fileEvent($event)" class="inputfile" id="file" name="file" onchange="this.form.submit()" />
+				<label for="file" class="ui big blue left floated button">
+					<i class="ui upload icon"></i> 
+					契約書アップロード
+				</label>
+			</form>
+		</div>
+
+		<div class="ui container">
+			<table class="ui selectable table">
+			<thead>
+			<tr>
+				<th class="th_no">No</th>
+				<th class="th_filename">ファイル名</th>
+				<th class="th_button"></th>
+			</tr>
+			</thead>			
+			<tbody>
+				{% for data in datas %}
+					<tr>
+						<td class="td_no">{{ loop.index }}</td>
+						<td class="td_filename">{{ data[1] }}</td>
+						<td class="td_button">
+							<form method="post">
+								<input type="hidden" id="seqid" name="seqid" value={{ data[0] }} />
+								<button class="ui blue button" formaction="/download">ダウンロード</button>
+								<button class="ui blue button" formaction="/download">解析</button>
+								<button class="ui blue button" formaction="/delete">削除</button>
+							</form>
+						</td>
+					</tr>
+				{% else %}
+					<tr>
+						<td></td>
+						<td>契約書がありません。アップロードして下さい。</td>
+						<td></td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>			
+		</div>
+		
+	</body>
+</html>
