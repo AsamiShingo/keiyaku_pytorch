@@ -1,5 +1,7 @@
 import pytest
 import shutil
+import os
+import pandas as pd
 from keiyakudata import KeiyakuData
 
 class TestKeiyakuData:
@@ -125,3 +127,18 @@ class TestKeiyakuData:
             assert data[1][0] == -1 or data[1][0] == 0 or data[1][0] == 1
             assert -1 <= data[1][1] and data[1][1] <= 5
             assert -1 <= data[1][2] and data[1][2] <= 6
+
+    def test_create_keiyaku_data(self, tmpdir):
+        testdatadir=os.path.join(os.path.dirname(__file__), "data")
+        srcfilepath=os.path.join(testdatadir, "test_keiyakudata.pdf")
+        desttxtpath=os.path.join(tmpdir, "testdata.txt")
+        destcsvpath=os.path.join(tmpdir, "testdata.csv")
+        KeiyakuData.create_keiyaku_data(srcfilepath, desttxtpath, destcsvpath)
+
+        assert os.path.exists(desttxtpath) == True
+        assert os.path.exists(destcsvpath) == True
+
+        df = pd.read_csv(destcsvpath, sep=',')
+        header = list(df.columns.values)
+        assert header == KeiyakuData._CSV_HEADER_CHECK
+        assert len(df.values) >= 1

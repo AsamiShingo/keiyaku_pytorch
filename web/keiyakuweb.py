@@ -7,6 +7,7 @@ import glob
 import re
 import threading
 import json
+from ..keiyakudata import KeiyakuData
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 create_seqid_mutex = threading.Lock()
@@ -51,13 +52,22 @@ def delete_seqid(seqid):
 
 def save_upload_file(seqid, request):
     f = request.files["file"]
-    filename = secure_filename(f.filename)
     targetdir = os.path.join(DATA_DIR, seqid)
 
-    f.save(os.path.join(DATA_DIR, seqid, secure_filename(f.filename)))
+    uploadsavename = secure_filename(f.filename)
+    txtname = "txt_{}.txt".format(os.path.basename(uploadsavename))
+    csvname = "csv_{}.csv".format(os.path.basename(uploadsavename))
+    uploadsavepath = os.path.join(targetdir, uploadsavename)
+    txtpath = os.path.join(targetdir, txtname)
+    csvpath = os.path.join(targetdir, csvname)
+    f.save(uploadsavepath)
+    KeiyakuData.create_keiyaku_data(uploadsavepath, txtpath, csvpath)
+
     with open(os.path.join(targetdir, "param.json"), "w") as parafile:
         data = {}
-        data["filename"] = filename
+        data["filename"] = uploadsavename
+        data["txtname"] = txtname
+        data["csvname"] = csvname
         json.dump(data, parafile, ensure_ascii=False, indent=4)
 
 def get_datas():
@@ -99,6 +109,3 @@ def delete():
     seqid = request.form["seqid"]
     delete_seqid(seqid)
     return redirect(url_for("index"))
-
-if __name__ == "__main__":
-    app.run(debug=True)
