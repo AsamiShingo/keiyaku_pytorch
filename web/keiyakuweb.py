@@ -7,7 +7,7 @@ import glob
 import re
 import threading
 import json
-from ..keiyakudata import KeiyakuData
+from keiyakudata import KeiyakuData
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 create_seqid_mutex = threading.Lock()
