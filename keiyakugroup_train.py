@@ -11,7 +11,7 @@ keiyakudata_path = r".\data\keiyakudata.csv"
 save_dir = r".\savedir"
 epoch_num = 20
 
-model_name = ""
+model_name = KeiyakuModelFactory.DEFAULT_MODEL_NAME
 if len(sys.argv) >= 2:
     model_name = sys.argv[1]
 
