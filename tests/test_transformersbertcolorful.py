@@ -3,6 +3,7 @@ import glob
 import os
 import pandas as pd
 import tensorflow.keras.backend as K
+import shutil
 from keiyakumodel import KeiyakuModel
 from keiyakudata import KeiyakuData
 from transformersbertcolorful import TransformersBertColorful, TransformersTokenizerBertColorful
@@ -89,7 +90,10 @@ class TestBertColorful:
             assert "".join(decode) == sentence
 
     @pytest.mark.skip(reason='heavy test')
-    def test_train_predict(self, test_transformers_bertcolorful: TransformersBertColorful, test_transformers_tokenizer_bertcolorful: TransformersTokenizerBertColorful, test_keiyakudata: KeiyakuData, tmpdir):
+    def test_train_predict(self, test_transformers_bertcolorful: TransformersBertColorful, test_transformers_tokenizer_bertcolorful: TransformersTokenizerBertColorful, test_keiyakudata: KeiyakuData):
+        tmpdir = os.path.join(os.path.dirname(__file__), r"data", r"model", test_transformers_bertcolorful.model_name)
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
         model = KeiyakuModel(test_transformers_tokenizer_bertcolorful)
         model.init_model(test_transformers_bertcolorful)
         model.pre_epoch = 1
@@ -98,7 +102,7 @@ class TestBertColorful:
         assert model.output_class1_num == 6
 
         study_datas = test_keiyakudata.get_study_group_datas(test_transformers_tokenizer_bertcolorful, 20)
-        model.train_model(study_datas, 2, tmpdir)
+        model.train_model(study_datas, 1, tmpdir)
 
         assert len(glob.glob(os.path.join(tmpdir, "model_summary.txt"))) == 1
         assert len(glob.glob(os.path.join(tmpdir, "model.json"))) == 1
@@ -112,7 +116,7 @@ class TestBertColorful:
         assert len(glob.glob(os.path.join(tmpdir, "parameter.json"))) == 1
 
         df = pd.read_csv(os.path.join(tmpdir, "result_data.csv"), sep=',')
-        assert df.shape == (2, 39)
+        assert df.shape == (1, 39)
 
         weight_path = glob.glob(os.path.join(tmpdir, "weights_last-*.data-*"))[0]
         weight_path = weight_path[:weight_path.find(".data-")]

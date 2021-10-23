@@ -1,6 +1,6 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transformersfactory import TransformersFactory
+from keiyakumodelfactory import KeiyakuModelFactory
 import os
 import datetime
 import sys
@@ -15,10 +15,7 @@ model_name = ""
 if len(sys.argv) >= 2:
     model_name = sys.argv[1]
 
-model, tokenizer = TransformersFactory.get_transfomers(model_name)
-    
-keiyakumodel = KeiyakuModel(tokenizer)
-keiyakumodel.init_model(model)
+keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel(model_name, loadweight=False)
 
 keiyakudata = KeiyakuData(keiyakudata_path)
 datas = keiyakudata.get_study_group_datas(tokenizer, model.seq_len)

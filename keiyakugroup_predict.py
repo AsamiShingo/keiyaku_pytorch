@@ -1,6 +1,6 @@
 from keiyakudata import KeiyakuData
 from keiyakumodel import KeiyakuModel
-from transformersfactory import TransformersFactory
+from keiyakumodelfactory import KeiyakuModelFactory
 import numpy as np
 import sys
 
@@ -12,13 +12,7 @@ model_name = ""
 if len(sys.argv) >= 2:
     model_name = sys.argv[1]
 
-model, tokenizer = TransformersFactory.get_transfomers(model_name)
-    
-keiyakumodel = KeiyakuModel(tokenizer)
-keiyakumodel.init_model(model)
-
-weight_path = r".\data\model\{}\weights".format(model.model_name)
-keiyakumodel.load_weight(weight_path)
+keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel(model_name)
 
 keiyakudata = KeiyakuData(keiyakudata_path)
 datas = keiyakudata.get_datas()
