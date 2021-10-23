@@ -15,7 +15,7 @@ class KeiyakuModelFactory:
     MODEL_FULL_NAME_BERTCOLORFUL=r"colorfulscoop/bert-base-ja"
     MODEL_FULL_NAME_ROBERTA=r"rinna/japanese-roberta-base"
 
-    DEFAULT_MODEL_NAME="roberta"
+    DEFAULT_MODEL_NAME="bert"
     now_model_name:str = ""
 
     seq_len = 256
@@ -59,6 +59,8 @@ class KeiyakuModelFactory:
     @classmethod
     def _craete_transformers(cls, model_name) -> None:
         cls.craete_transformers_mutex.acquire()
+        cls.model = None
+        cls.tokenizer = None
 
         if model_name == cls.MODEL_NAME_BERT:
             cls.model = TransformersBert(seq_len=cls.seq_len)
