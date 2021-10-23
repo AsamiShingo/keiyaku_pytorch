@@ -25,7 +25,7 @@ class TestKeiyakuData:
             f.write("D21,D22,,D24,2,7,D25\n")
             f.write("D21,D22,D23,,2,3,D25\n")
             f.write("D21,D22,D23,D24,2,3,D25\n")
-            f.write("D21,D22,D23,D24,2,3,D25\n")
+            f.write("D21,D22,D23,D24,2,3,\n")
 
         yield file_path
 
@@ -85,7 +85,7 @@ class TestKeiyakuData:
         assert datas[0][7] == ""
         assert datas[1][6] == "D25"
         assert datas[1][7] == "D15"
-        assert datas[9][6] == "D25"
+        assert datas[9][6] == ""
         assert datas[9][7] == "D25"
 
         assert datas[0][8] == 1

@@ -63,6 +63,10 @@ class KeiyakuData:
             if pd.isnull(data["条文分類"]):
                 df.iat[index, 5] = -1
 
+            if pd.isnull(data["文章"]):
+                df.iat[index, 6] = ""
+                data["文章"] = ""
+
             bef_data = data
 
     @classmethod

@@ -7,10 +7,59 @@ import glob
 import re
 import threading
 import json
+import numpy as np
+import datetime
 from keiyakudata import KeiyakuData
+from keiyakumodel import KeiyakuModel
+from keiyakumodelfactory import KeiyakuModelFactory
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
+ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
 create_seqid_mutex = threading.Lock()
+keiyaku_analyze_mutex = threading.Lock()
+
+def keiyaku_analyze(seqid):
+    keiyaku_analyze_mutex.acquire()
+
+    targetdir = os.path.join(DATA_DIR, seqid)
+    
+    with open(os.path.join(targetdir, "param.json"), "r") as parafile:
+        paradata = json.load(parafile)
+        txtname = os.path.join(targetdir, paradata["txtname"])
+        csvname = os.path.join(targetdir, paradata["csvname"])
+    
+    csvpath = os.path.join(targetdir, csvname)
+
+    analyze_dir = os.path.join(ANALYZE_DIR, seqid)
+    os.makedirs(analyze_dir, exist_ok=True)
+    analyze_file = os.path.join(analyze_dir, datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".txt")
+
+    keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()
+
+    keiyakudata = KeiyakuData(csvpath)
+    datas = keiyakudata.get_datas()
+    predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
+
+    np.set_printoptions(precision=2, floatmode='fixed')
+
+    with open(analyze_file, "w") as f:
+        for i in range(0, len(datas), 1000):
+            targets = datas[i:i+1000]
+            predict_targets = predict_datas[i:i+1000]
+            scores = keiyakumodel.predict(predict_targets)
+
+            for target, score1, score2 in zip(targets, scores[0], scores[1]):
+                sentense = target[6]
+                kind1 = score2.argmax()
+                if score1 >= 0.5:
+                    f.write("{}---------------------------------------------\n".format(score1))
+                    
+                f.write("{}-{:0.2f}:{}\n".format(kind1, score2[kind1], sentense))
+
+    keiyaku_analyze_mutex.release()
+    
+    return analyze_file, txtname
+
 
 def create_seqid():
     create_seqid_mutex.acquire()
@@ -109,3 +158,9 @@ def delete():
     seqid = request.form["seqid"]
     delete_seqid(seqid)
     return redirect(url_for("index"))
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    seqid = request.form["seqid"]
+    filepath, filename = keiyaku_analyze(seqid)
+    return send_file(filepath, as_attachment=True, attachment_filename=filename)
