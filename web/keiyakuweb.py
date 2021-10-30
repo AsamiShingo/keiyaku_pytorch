@@ -137,7 +137,9 @@ def get_datas():
 app = Flask(__name__)
 
 def init_web(debugmode):
-    KeiyakuModelFactory.get_keiyakumodel()
+    if debugmode == False:
+        KeiyakuModelFactory.get_keiyakumodel()
+        
     app.run(debug=debugmode, host="0.0.0.0", port=80)
     
 @app.route("/keiyaku_group/")
