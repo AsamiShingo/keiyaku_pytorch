@@ -25,8 +25,8 @@ def keiyaku_analyze(seqid):
     
     with open(os.path.join(targetdir, "param.json"), "r") as parafile:
         paradata = json.load(parafile)
-        txtname = os.path.join(targetdir, paradata["txtname"])
-        csvname = os.path.join(targetdir, paradata["csvname"])
+        txtname = paradata["txtname"]
+        csvname = paradata["csvname"]
     
     csvpath = os.path.join(targetdir, csvname)
 
