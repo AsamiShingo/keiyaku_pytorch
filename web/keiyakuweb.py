@@ -35,7 +35,7 @@ def keiyaku_analyze(seqid):
     analyze_file = os.path.join(analyze_dir, datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".txt")
 
     keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()
-
+    
     keiyakudata = KeiyakuData(csvpath)
     datas = keiyakudata.get_datas()
     predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
@@ -136,6 +136,10 @@ def get_datas():
 
 app = Flask(__name__)
 
+def init_web(debugmode):
+    KeiyakuModelFactory.get_keiyakumodel()
+    app.run(debug=debugmode)
+    
 @app.route("/")
 def index():
     datas = get_datas()
