@@ -138,32 +138,32 @@ app = Flask(__name__)
 
 def init_web(debugmode):
     KeiyakuModelFactory.get_keiyakumodel()
-    app.run(debug=debugmode)
+    app.run(debug=debugmode, host="0.0.0.0", port=80)
     
-@app.route("/")
+@app.route("/keiyaku_group/")
 def index():
     datas = get_datas()
     return render_template("index.html", datas=datas)
 
-@app.route("/upload", methods=["POST"])
+@app.route("/keiyaku_group/upload", methods=["POST"])
 def upload():
     seqid = create_seqid()
     save_upload_file(seqid, request)
     return redirect(url_for("index"))
 
-@app.route("/download", methods=["POST"])
+@app.route("/keiyaku_group/download", methods=["POST"])
 def download():
     seqid = request.form["seqid"]
     filepath = get_download_filepath(seqid)
     return send_file(filepath, as_attachment=True, attachment_filename=os.path.basename(filepath))
 
-@app.route("/delete", methods=["POST"])
+@app.route("/keiyaku_group/delete", methods=["POST"])
 def delete():
     seqid = request.form["seqid"]
     delete_seqid(seqid)
     return redirect(url_for("index"))
 
-@app.route("/analyze", methods=["POST"])
+@app.route("/keiyaku_group/analyze", methods=["POST"])
 def analyze():
     seqid = request.form["seqid"]
     filepath, filename = keiyaku_analyze(seqid)

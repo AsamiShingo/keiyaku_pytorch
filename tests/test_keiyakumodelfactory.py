@@ -12,8 +12,8 @@ class TestKeiyakuModelFactory:
     def test_get_keiyakumodel(self):
         keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()
         assert type(keiyakumodel) == KeiyakuModel
-        assert type(model) == TransformersRoberta
-        assert type(tokenizer) == TransformersTokenizerRoberta
+        assert type(model) == TransformersBert
+        assert type(tokenizer) == TransformersTokenizerBert
 
         keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel(KeiyakuModelFactory.MODEL_NAME_BERT, False)
         assert type(keiyakumodel) == KeiyakuModel
@@ -46,8 +46,8 @@ class TestKeiyakuModelFactory:
     def test_get_transfomers(self):
 
         model, tokenizer = KeiyakuModelFactory.get_transfomers()
-        assert type(model) == TransformersRoberta
-        assert type(tokenizer) == TransformersTokenizerRoberta
+        assert type(model) == TransformersBert
+        assert type(tokenizer) == TransformersTokenizerBert
 
         model, tokenizer = KeiyakuModelFactory.get_transfomers(KeiyakuModelFactory.MODEL_NAME_BERT)
         assert type(model) == TransformersBert
