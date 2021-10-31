@@ -4,6 +4,7 @@ from flask import jsonify
 from flask import render_template
 from flask import flash
 from werkzeug.utils import secure_filename
+import werkzeug
 import os
 import glob
 import re
@@ -17,6 +18,7 @@ from keiyakumodelfactory import KeiyakuModelFactory
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
 UPLOAD_FILE_EXTENSION = [ "pdf", "doc", "docx" ]
+UPLOAD_FILE_MAX_SIZE_MB = 10
 
 keiyaku_analyze_mutex = threading.Lock()
 
@@ -119,9 +121,7 @@ def keiyaku_analyze(csvpath):
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "keiyaku_group_cosmo"
-
-# サイズ制限10MByte
-# app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = UPLOAD_FILE_MAX_SIZE_MB * 1024 * 1024
 
 def init_web(debugmode):
     if debugmode == False:
@@ -216,3 +216,8 @@ def analyze_json():
         jsondata[col] = scoredata
 
     return jsonify(jsondata)
+
+@app.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+def handle_over_max_file_size(error):
+    flash("ファイルサイズが{}MBを超えるためアップロードできません".format(UPLOAD_FILE_MAX_SIZE_MB), category="flash_error")
+    return redirect(url_for("index"))
