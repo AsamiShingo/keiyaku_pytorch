@@ -1,6 +1,7 @@
 .grid.container {
   margin-top:5em;
 }
+
 .inputfile {
 	width:0.1px;
 	height:0.1px;
@@ -24,4 +25,16 @@
 
 .td_button {
 	text-align:right;
+}
+
+.flashes {
+	position:relative;
+	left:20px;
+}
+
+.flash_info {
+	color: black;
+}
+.flash_error {
+	color: deeppink;
 }

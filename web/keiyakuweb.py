@@ -2,6 +2,7 @@ from flask import Flask, url_for, redirect, send_file
 from flask import request
 from flask import jsonify
 from flask import render_template
+from flask import flash
 from werkzeug.utils import secure_filename
 import os
 import glob
@@ -15,6 +16,8 @@ from keiyakumodelfactory import KeiyakuModelFactory
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
+UPLOAD_FILE_EXTENSION = [ "pdf", "doc", "docx" ]
+
 keiyaku_analyze_mutex = threading.Lock()
 
 class KeiyakuWebData:
@@ -115,14 +118,19 @@ def keiyaku_analyze(csvpath):
 
 app = Flask(__name__)
 
+app.config["SECRET_KEY"] = "keiyaku_group_cosmo"
+
+# サイズ制限10MByte
+# app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+
 def init_web(debugmode):
     if debugmode == False:
         KeiyakuModelFactory.get_keiyakumodel()
         
     app.run(debug=debugmode, host="0.0.0.0", port=80)
     
-@app.route("/keiyaku_group/")
-def index():
+@app.route("/keiyaku_group/", methods=["GET"])
+def index():    
     datas = []
     for dir in glob.glob(os.path.join(DATA_DIR, r"?????")):
         seqid = os.path.basename(dir)
@@ -138,8 +146,12 @@ def upload():
     f = request.files["file"]
     data = KeiyakuWebData(orgfilename=f.filename, mimetype=request.mimetype)
     
-    f.save(data.get_filepath())
-    KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
+    extension = os.path.splitext(f.filename)[1].lower()
+    if extension not in UPLOAD_FILE_EXTENSION:
+        flash("拡張子{}はアップロードできません".format(extension if extension != "" else "無し"), category="flash_error")
+    else:
+        f.save(data.get_filepath())
+        KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
 
     return redirect(url_for("index"))
 

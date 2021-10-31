@@ -18,6 +18,18 @@
 		</div>
 
 		<div class="ui container">
+			{% with messages= get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					<ul class="flashes">
+						{% for category, message in messages %}
+							<li class="{{ category }}">{{ message }}</li>
+						{% endfor %}
+					</ul> 
+				{% endif %}
+			{% endwith %}
+		</div>
+
+		<div class="ui container">
 			<form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
 				<input type="file" (change)="fileEvent($event)" class="inputfile" id="file" name="file" onchange="this.form.submit()" />
 				<label for="file" class="ui big blue left floated button">
