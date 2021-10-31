@@ -1,5 +1,6 @@
 from flask import Flask, url_for, redirect, send_file
 from flask import request
+from flask import jsonify
 from flask import render_template
 from werkzeug.utils import secure_filename
 import os
@@ -18,48 +19,66 @@ ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
 create_seqid_mutex = threading.Lock()
 keiyaku_analyze_mutex = threading.Lock()
 
-def keiyaku_analyze(seqid):
-    keiyaku_analyze_mutex.acquire()
-
-    targetdir = os.path.join(DATA_DIR, seqid)
-    
+def keiyaku_analyze_txt(seqid):
+    targetdir = os.path.join(DATA_DIR, seqid)    
     with open(os.path.join(targetdir, "param.json"), "r") as parafile:
         paradata = json.load(parafile)
         txtname = paradata["txtname"]
         csvname = paradata["csvname"]
     
     csvpath = os.path.join(targetdir, csvname)
+    keiyakudata = KeiyakuData(csvpath)
+    datas = keiyakudata.get_datas()
+    scores1, scores2 = keiyaku_analyze(csvpath)
 
     analyze_dir = os.path.join(ANALYZE_DIR, seqid)
     os.makedirs(analyze_dir, exist_ok=True)
     analyze_file = os.path.join(analyze_dir, datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".txt")
 
-    keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()
-    
-    keiyakudata = KeiyakuData(csvpath)
-    datas = keiyakudata.get_datas()
-    predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
-
     np.set_printoptions(precision=2, floatmode='fixed')
 
     with open(analyze_file, "w") as f:
-        for i in range(0, len(datas), 1000):
-            targets = datas[i:i+1000]
-            predict_targets = predict_datas[i:i+1000]
-            scores = keiyakumodel.predict(predict_targets)
-
-            for target, score1, score2 in zip(targets, scores[0], scores[1]):
-                sentense = target[6]
-                kind1 = score2.argmax()
-                if score1 >= 0.5:
-                    f.write("{}---------------------------------------------\n".format(score1))
-                    
-                f.write("{}-{:0.2f}:{}\n".format(kind1, score2[kind1], sentense))
-
-    keiyaku_analyze_mutex.release()
+        for data, score1, score2 in zip(datas, scores1, scores2):
+            sentense = data[6]
+            kind1 = score2.argmax()
+            if score1 >= 0.5:
+                f.write("{}---------------------------------------------\n".format(score1))
+                
+            f.write("{}-{:0.2f}:{}\n".format(kind1, score2[kind1], sentense))
     
     return analyze_file, txtname
 
+def keiyaku_analyze_json(seqid):
+    targetdir = os.path.join(DATA_DIR, seqid)    
+    with open(os.path.join(targetdir, "param.json"), "r") as parafile:
+        paradata = json.load(parafile)
+        csvname = paradata["csvname"]
+    
+    csvpath = os.path.join(targetdir, csvname)
+    scores1, scores2 = keiyaku_analyze(csvpath)
+    
+    jsondata = {}
+    for col, score in enumerate(zip(scores1, scores2)):
+        score1 = score[0]
+        score2 = score[1]
+        scoredata = {}
+        scoredata[1] = round(float(score1[0]), 2)
+        scoredata[2] = { i:round(float(score), 2) for i, score in enumerate(score2) }
+        jsondata[col] = scoredata
+        
+    return jsondata
+
+def keiyaku_analyze(csvpath):
+    keiyaku_analyze_mutex.acquire()
+
+    keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()    
+    keiyakudata = KeiyakuData(csvpath)
+    predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
+    score1, score2 = keiyakumodel.predict(predict_datas)
+
+    keiyaku_analyze_mutex.release()
+    
+    return score1, score2
 
 def create_seqid():
     create_seqid_mutex.acquire()
@@ -165,8 +184,14 @@ def delete():
     delete_seqid(seqid)
     return redirect(url_for("index"))
 
-@app.route("/keiyaku_group/analyze", methods=["POST"])
-def analyze():
+@app.route("/keiyaku_group/analyze_txt", methods=["POST"])
+def analyze_txt():
     seqid = request.form["seqid"]
-    filepath, filename = keiyaku_analyze(seqid)
+    filepath, filename = keiyaku_analyze_txt(seqid)
     return send_file(filepath, as_attachment=True, attachment_filename=filename)
+
+@app.route("/keiyaku_group/analyze_json", methods=["POST"])
+def analyze_json():
+    seqid = request.form["seqid"]
+    jsondata = keiyaku_analyze_json(seqid)
+    return jsonify(jsondata)
