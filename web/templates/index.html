@@ -38,15 +38,6 @@
 				</label>
 			</form>
 		</div>
-		<div class="ui container">
-			<form action="{{ url_for('api_upload') }}" method="post" enctype="multipart/form-data">
-				<input type="file" (change)="fileEvent($event)" class="inputfile" id="apifile" name="file" onchange="this.form.submit()" />
-				<label for="apifile" class="ui big blue left floated button">
-					<i class="ui upload icon"></i> 
-					契約書アップロード(API)
-				</label>
-			</form>
-		</div>
 
 		<div class="ui container">
 			<table class="ui selectable table">
@@ -66,8 +57,7 @@
 							<form method="post">
 								<input type="hidden" id="seqid" name="seqid" value={{ data[0] }} />
 								<button class="ui blue button" formaction="{{ url_for('download') }}">ダウンロード</button>
-								<button class="ui blue button" formaction="{{ url_for('analyze') }}">解析(txt)</button>
-								<button class="ui blue button" formaction="{{ url_for('api_analyze') }}">解析(json)</button>
+								<button class="ui blue button" formaction="{{ url_for('analyze') }}">解析</button>
 								<button class="ui blue button" formaction="{{ url_for('delete') }}">削除</button>
 							</form>
 						</td>
