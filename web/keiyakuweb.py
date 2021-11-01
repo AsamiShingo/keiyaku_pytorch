@@ -17,7 +17,7 @@ from keiyakumodelfactory import KeiyakuModelFactory
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
-UPLOAD_FILE_EXTENSION = [ "pdf", "doc", "docx" ]
+UPLOAD_FILE_EXTENSION = [ ".pdf", ".doc", ".docx" ]
 UPLOAD_FILE_MAX_SIZE_MB = 10
 
 keiyaku_analyze_mutex = threading.Lock()
@@ -143,7 +143,12 @@ def index():
 
 @app.route("/keiyaku_group/upload", methods=["POST"])
 def upload():
-    f = request.files["file"]
+    try:
+        f = request.files["file"]
+    except werkzeug.exceptions.RequestEntityTooLarge:
+        flash("ファイルサイズが{}MBを超えるためアップロードできません".format(UPLOAD_FILE_MAX_SIZE_MB), category="flash_error")
+        return redirect(url_for("index"))
+
     data = KeiyakuWebData(orgfilename=f.filename, mimetype=request.mimetype)
     
     extension = os.path.splitext(f.filename)[1].lower()
@@ -154,6 +159,27 @@ def upload():
         KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
 
     return redirect(url_for("index"))
+
+@app.route("/keiyaku_group/api/upload", methods=["POST"])
+def api_upload():
+    result={"seqid":-1}
+
+    try:
+        f = request.files["file"]
+    except werkzeug.exceptions.RequestEntityTooLarge:
+        return jsonify(result)
+
+    data = KeiyakuWebData(orgfilename=f.filename, mimetype=request.mimetype)
+    
+    extension = os.path.splitext(f.filename)[1].lower()
+    if extension not in UPLOAD_FILE_EXTENSION:
+        pass
+    else:
+        f.save(data.get_filepath())
+        KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
+        result["seqid"] = data.seqid
+
+    return jsonify(result)
 
 @app.route("/keiyaku_group/download", methods=["POST"])
 def download():
@@ -177,8 +203,8 @@ def delete():
 
     return redirect(url_for("index"))
 
-@app.route("/keiyaku_group/analyze_txt", methods=["POST"])
-def analyze_txt():
+@app.route("/keiyaku_group/analyze", methods=["POST"])
+def analyze():
     seqid = request.form["seqid"]
     data = KeiyakuWebData(seqid)
     
@@ -199,8 +225,8 @@ def analyze_txt():
 
     return send_file(analyze_path, as_attachment=True, attachment_filename=data.get_orgtxtname())
 
-@app.route("/keiyaku_group/analyze_json", methods=["POST"])
-def analyze_json():
+@app.route("/keiyaku_group/api/analyze", methods=["POST"])
+def api_analyze():
     seqid = request.form["seqid"]
     data = KeiyakuWebData(seqid)
 
@@ -216,8 +242,3 @@ def analyze_json():
         jsondata[col] = scoredata
 
     return jsonify(jsondata)
-
-@app.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
-def handle_over_max_file_size(error):
-    flash("ファイルサイズが{}MBを超えるためアップロードできません".format(UPLOAD_FILE_MAX_SIZE_MB), category="flash_error")
-    return redirect(url_for("index"))
