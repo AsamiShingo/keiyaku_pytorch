@@ -191,6 +191,22 @@ def download():
 def api_download():
     return download()
 
+@app.route("/keiyaku_group/download_txt", methods=["POST"])
+def download_txt():
+    seqid = request.form["seqid"]
+    data = KeiyakuWebData(seqid)
+    return send_file(data.get_txtpath(), as_attachment=True, attachment_filename=data.get_orgtxtname())
+
+@app.route("/keiyaku_group/api/download_txt", methods=["POST"])
+def api_download_txt():
+    seqid = request.form["seqid"]
+    data = KeiyakuWebData(seqid)
+    result = ""
+    with open(data.get_txtpath(), 'r') as f:
+        result = f.read()
+
+    return result
+
 @app.route("/keiyaku_group/delete", methods=["POST"])
 def delete():
     seqid = request.form["seqid"]

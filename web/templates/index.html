@@ -57,6 +57,7 @@
 							<form method="post">
 								<input type="hidden" id="seqid" name="seqid" value={{ data[0] }} />
 								<button class="ui blue button" formaction="{{ url_for('download') }}">ダウンロード</button>
+								<button class="ui blue button" formaction="{{ url_for('download_txt') }}">ダウンロード(txt)</button>
 								<button class="ui blue button" formaction="{{ url_for('analyze') }}">解析</button>
 								<button class="ui blue button" formaction="{{ url_for('delete') }}">削除</button>
 							</form>
