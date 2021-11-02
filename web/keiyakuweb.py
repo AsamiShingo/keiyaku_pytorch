@@ -47,7 +47,9 @@ class KeiyakuWebData:
             self.seqid = self._create_seqid()
             self.paradata = {}
             
-            filename = secure_filename(orgfilename)
+            basefilename = os.path.basename(secure_filename(orgfilename))
+            extension = os.path.splitext(orgfilename)[1]
+            filename = "{}_{}.{}".format(datetime.datetime.now().strftime('%Y%m%d%H%M%S'), basefilename, extension)
             self.paradata["orgfilename"] = orgfilename
             self.paradata["filename"] = filename
             self.paradata["txtname"] = "txt_{}.txt".format(os.path.basename(filename))
