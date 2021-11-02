@@ -187,21 +187,37 @@ def download():
     data = KeiyakuWebData(seqid)
     return send_file(data.get_filepath(), as_attachment=True, attachment_filename=data.get_orgfilename())
 
+@app.route("/keiyaku_group/api/download", methods=["POST"])
+def api_download():
+    return download()
+
 @app.route("/keiyaku_group/delete", methods=["POST"])
 def delete():
     seqid = request.form["seqid"]
     data = KeiyakuWebData(seqid)
 
     dirpath = data.get_dirpath()
-    if os.path.isdir(dirpath) == False:
-        raise FileNotFoundError("{}のディレクトリが存在しません".format(dirpath))
+    if os.path.isdir(dirpath) == True:
+        for delfile in os.listdir(dirpath):
+            os.remove(os.path.join(dirpath, delfile))
 
-    for delfile in os.listdir(dirpath):
-        os.remove(os.path.join(dirpath, delfile))
-
-    os.rmdir(dirpath)
+        os.rmdir(dirpath)
 
     return redirect(url_for("index"))
+
+@app.route("/keiyaku_group/api/delete", methods=["POST"])
+def api_delete():
+    seqid = request.form["seqid"]
+    data = KeiyakuWebData(seqid)
+
+    dirpath = data.get_dirpath()
+    if os.path.isdir(dirpath) == True:
+        for delfile in os.listdir(dirpath):
+            os.remove(os.path.join(dirpath, delfile))
+
+        os.rmdir(dirpath)
+
+    return jsonify({})
 
 @app.route("/keiyaku_group/analyze", methods=["POST"])
 def analyze():
