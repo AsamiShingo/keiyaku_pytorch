@@ -143,6 +143,22 @@ def index():
 
     return render_template("index.html", datas=datas)
 
+@app.route("/keiyaku_group/api", methods=["GET"])
+def api():
+    return app.send_static_file("index.html")
+
+@app.route("/keiyaku_group/api/list", methods=["GET"])
+def api_list():
+    result=[]
+    for dir in glob.glob(os.path.join(DATA_DIR, r"?????")):
+        seqid = os.path.basename(dir)
+        data = KeiyakuWebData(seqid)
+
+        if os.path.isfile(data.get_filepath()):
+            result.append({"seqid": seqid, "filename": data.get_orgfilename()})
+
+    return jsonify(result)
+
 @app.route("/keiyaku_group/upload", methods=["POST"])
 def upload():
     try:
@@ -180,6 +196,7 @@ def api_upload():
         f.save(data.get_filepath())
         KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
         result["seqid"] = data.seqid
+        result["filename"] = data.get_orgfilename()
 
     return jsonify(result)
 
@@ -276,3 +293,12 @@ def api_analyze():
         jsondata[col] = scoredata
 
     return jsonify(jsondata)
+    
+@app.after_request
+def after_request(response):
+    if app.debug:
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        
+    return response
