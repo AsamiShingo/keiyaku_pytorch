@@ -281,6 +281,10 @@ def analyze():
 
 @app.route("/keiyaku_group/api/analyze", methods=["POST"])
 def api_analyze():
+    return analyze()
+    
+@app.route("/keiyaku_group/api/analyze_json", methods=["POST"])
+def api_analyze_json():
     seqid = request.form["seqid"]
     result={"data" : {}, "code": 0, "message": [] }
     
