@@ -3,6 +3,7 @@ from flask import request
 from flask import jsonify
 from flask import render_template
 from flask import flash
+from flask import Blueprint
 from werkzeug.utils import secure_filename
 import werkzeug
 import os
@@ -120,7 +121,9 @@ def keiyaku_analyze(csvpath):
     
     return score1, score2
 
+view_app = Blueprint("view", __name__, static_url_path='/keiyaku_group/view', static_folder='./view/build')
 app = Flask(__name__)
+app.register_blueprint(view_app)
 
 app.config["SECRET_KEY"] = "keiyaku_group_cosmo"
 app.config['MAX_CONTENT_LENGTH'] = UPLOAD_FILE_MAX_SIZE_MB * 1024 * 1024
@@ -145,17 +148,17 @@ def index():
 
 @app.route("/keiyaku_group/api", methods=["GET"])
 def api():
-    return app.send_static_file("index.html")
+    return view_app.send_static_file("index.html")
 
 @app.route("/keiyaku_group/api/list", methods=["GET"])
 def api_list():
-    result=[]
+    result={"data": [], "code": 0}
     for dir in glob.glob(os.path.join(DATA_DIR, r"?????")):
         seqid = os.path.basename(dir)
         data = KeiyakuWebData(seqid)
 
         if os.path.isfile(data.get_filepath()):
-            result.append({"seqid": seqid, "filename": data.get_orgfilename()})
+            result["data"].append({"seqid": seqid, "filename": data.get_orgfilename()})
 
     return jsonify(result)
 
@@ -180,23 +183,27 @@ def upload():
 
 @app.route("/keiyaku_group/api/upload", methods=["POST"])
 def api_upload():
-    result={"seqid":-1}
+    result={"data" : { "seqid":-1, "filename": ""}, "code": 0, "message": [] }
 
     try:
         f = request.files["file"]
     except werkzeug.exceptions.RequestEntityTooLarge:
+        result["message"].append({"category": "error", "message": "ファイルサイズが{}MBを超えるためアップロードできません".format(UPLOAD_FILE_MAX_SIZE_MB)})
+        result["code"] = 9
         return jsonify(result)
 
     data = KeiyakuWebData(orgfilename=f.filename, mimetype=request.mimetype)
     
     extension = os.path.splitext(f.filename)[1].lower()
     if extension not in UPLOAD_FILE_EXTENSION:
-        pass
+        result["message"].append({"category": "error", "message": "拡張子{}はアップロードできません".format(extension if extension != "" else "無し")})
+        result["code"] = 9
     else:
         f.save(data.get_filepath())
         KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
-        result["seqid"] = data.seqid
-        result["filename"] = data.get_orgfilename()
+        result["data"]["seqid"] = data.seqid
+        result["data"]["filename"] = data.get_orgfilename()
+        result["message"].append({"category": "info", "message": "{}をアップロードしました".format(data.get_orgfilename())})
 
     return jsonify(result)
 
@@ -218,13 +225,7 @@ def download_txt():
 
 @app.route("/keiyaku_group/api/download_txt", methods=["POST"])
 def api_download_txt():
-    seqid = request.form["seqid"]
-    data = KeiyakuWebData(seqid)
-    result = ""
-    with open(data.get_txtpath(), 'r') as f:
-        result = f.read()
-
-    return result
+    return download_txt();
 
 @app.route("/keiyaku_group/delete", methods=["POST"])
 def delete():
@@ -243,6 +244,8 @@ def delete():
 @app.route("/keiyaku_group/api/delete", methods=["POST"])
 def api_delete():
     seqid = request.form["seqid"]
+    result={"data" : { "seqid": seqid }, "code": 0, "message": [] }
+    
     data = KeiyakuWebData(seqid)
 
     dirpath = data.get_dirpath()
@@ -279,6 +282,8 @@ def analyze():
 @app.route("/keiyaku_group/api/analyze", methods=["POST"])
 def api_analyze():
     seqid = request.form["seqid"]
+    result={"data" : {}, "code": 0, "message": [] }
+    
     data = KeiyakuWebData(seqid)
 
     scores1, scores2 = keiyaku_analyze(data.get_csvpath())
@@ -292,7 +297,8 @@ def api_analyze():
         scoredata[2] = { i:round(float(score), 2) for i, score in enumerate(score2) }
         jsondata[col] = scoredata
 
-    return jsonify(jsondata)
+    result["data"] = jsondata
+    return jsonify(result)
     
 @app.after_request
 def after_request(response):
