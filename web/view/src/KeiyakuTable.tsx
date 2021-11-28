@@ -15,7 +15,7 @@ type KeiyakuRecordType = {
 
 export const KeiyakuTable = () => {
   const [keiyakuRecords, setKeiyakuRecords] = useState<KeiyakuRecordType[]>([]);
-  const { addMessages } = useMessageListContext();
+  const { addMessage, addMessages } = useMessageListContext();
 
   useEffect(() => {
     axios.get(KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/list')
@@ -63,17 +63,17 @@ export const KeiyakuTable = () => {
   }
 
   function onSuccess(response: AxiosResponse) {
-    addMessages([{ category: "info", message: "testmessage1" }, { category: "error", message: "testmessage2" }]);
-    console.log("onSuccess");
   }
 
-  function onException(exception: AxiosError) {
-    console.log("onException");
+  function onException(message: string) {
+    return (exception: AxiosError) => {
+      addMessage({"category":"error", "message": message})
+    }
   }
 
   return (
 		<div> 
-      <FileUploadButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/upload' } onSuccess={onFileUploadSuccess()} onException={onException}>契約書アップロード</FileUploadButton>
+      <FileUploadButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/upload' } onSuccess={onFileUploadSuccess()} onException={onException("契約書のアップロードに失敗しました")}>契約書アップロード</FileUploadButton>
 			<table className="ui selectable table">
 			<thead>
 			<tr>
@@ -89,13 +89,13 @@ export const KeiyakuTable = () => {
             <td className="td_filename">{record.filename}</td>
             <td className="td_button">
               <FileDownloadButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/download' } filename={record.filename} params={{"seqid": record.seqid}}
-                onSuccess={onSuccess} onException={onException}>ダウンロード</FileDownloadButton>
+                onSuccess={onSuccess} onException={onException(record.filename+"のダウンロードに失敗しました")}>ダウンロード</FileDownloadButton>
               <FileDownloadButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/download_txt' } filename={getTextFileName(record.filename)} params={{"seqid": record.seqid}}
-                onSuccess={onSuccess} onException={onException}>ダウンロード(txt)</FileDownloadButton>
+                onSuccess={onSuccess} onException={onException(record.filename+"のダウンロード(txt)に失敗しました")}>ダウンロード(txt)</FileDownloadButton>
               <FileDownloadButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/analyze' } filename={getAnalyzeFileName(record.filename)} params={{"seqid": record.seqid}}
-                onSuccess={onSuccess} onException={onException}>解析</FileDownloadButton>
+                onSuccess={onSuccess} onException={onException(record.filename+"の解析に失敗しました")}>解析</FileDownloadButton>
               <PostButton url={ KEIYAKU_GROUP_DOMAIN + '/keiyaku_group/api/delete' } params={{"seqid": record.seqid}}
-                onSuccess={onDeleteSuccess(record.seqid)} onException={onException}>削除</PostButton>
+                onSuccess={onDeleteSuccess(record.seqid)} onException={onException(record.filename+"の削除に失敗しました")}>削除</PostButton>
             </td>
           </tr>
         )}

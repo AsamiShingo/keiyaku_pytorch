@@ -12,15 +12,15 @@ type PostButtonProps = {
     children: ReactNode,
     url: string,
     params: { [key: string]: any },
-    onSuccess: (response: AxiosResponse) => void,
-    onException: (exception: AxiosError) => void,
+    onSuccess?: (response: AxiosResponse) => void,
+    onException?: (exception: AxiosError) => void,
 }
 
 type FileUploadButtonProps = {
     children: ReactNode,
     url: string,
-    onSuccess: (response: AxiosResponse) => void,
-    onException: (exception: AxiosError) => void,
+    onSuccess?: (response: AxiosResponse) => void,
+    onException?: (exception: AxiosError) => void,
 }
 
 type FileDownloadButtonProps = {
@@ -28,8 +28,8 @@ type FileDownloadButtonProps = {
     url: string,
     filename: string,
     params: { [key: string]: any },
-    onSuccess: (response: AxiosResponse) => void,
-    onException: (exception: AxiosError) => void,
+    onSuccess?: (response: AxiosResponse) => void,
+    onException?: (exception: AxiosError) => void,
 }
 
 export const NormalButton = (props: NormalButtonProps) => {
@@ -58,12 +58,18 @@ export const PostButton = (props: PostButtonProps) => {
         Object.keys(props.params).forEach((key) => form.append(key, props.params[key]));
         axios.post(props.url, form, {
         }).then((response: AxiosResponse) => {
-            props.onSuccess(response);
+            if(props.onSuccess !== undefined) {
+                props.onSuccess(response);
+            }
+
             if(mounted.current) {
                 setIconAnimetionFlg(false);
             }
         }).catch((exception: AxiosError) => {
-            props.onException(exception);
+            if(props.onException !== undefined) {
+                props.onException(exception);
+            }
+
             if(mounted.current) {
                 setIconAnimetionFlg(false);
             }
@@ -95,10 +101,16 @@ export const FileUploadButton = (props: FileUploadButtonProps) => {
                 'content-type': 'multipart/form-data',
             },
         }).then((response: AxiosResponse) => {
-            props.onSuccess(response);
+            if(props.onSuccess !== undefined) {
+                props.onSuccess(response);
+            }
+
             setIconAnimetionFlg(false);
         }).catch((exception: AxiosError) => {
-            props.onException(exception);
+            if(props.onException !== undefined) {
+                props.onException(exception);
+            }
+
             setIconAnimetionFlg(false);
         })
     }
@@ -133,10 +145,16 @@ export const FileDownloadButton = (props: FileDownloadButtonProps) => {
             document.body.appendChild(fileLink);
             fileLink.click();
 
-            props.onSuccess(response);
+            if(props.onSuccess !== undefined) {
+                props.onSuccess(response);
+            }
+            
             setIconAnimetionFlg(false);
         }).catch((exception: AxiosError) => {
-            props.onException(exception);
+            if(props.onException !== undefined) {
+                props.onException(exception);
+            }
+
             setIconAnimetionFlg(false);
         });
     }
