@@ -1,0 +1,19 @@
+.grid.container {
+    margin-top:5em;
+}
+
+.th_no {
+    width:50px;
+}
+
+.th_button {
+    width:550px;
+}
+
+.td_no {
+    text-align:right
+}
+
+.td_button {
+    text-align:right;
+}

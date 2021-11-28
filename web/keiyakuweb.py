@@ -134,7 +134,7 @@ def init_web(debugmode):
         
     app.run(debug=debugmode, host="0.0.0.0", port=80)
     
-@app.route("/keiyaku_group/", methods=["GET"])
+@app.route("/keiyaku_group/template/", methods=["GET"])
 def index():    
     datas = []
     for dir in glob.glob(os.path.join(DATA_DIR, r"?????")):
@@ -146,8 +146,8 @@ def index():
 
     return render_template("index.html", datas=datas)
 
-@app.route("/keiyaku_group/api", methods=["GET"])
-def api():
+@app.route("/keiyaku_group/", methods=["GET"])
+def view_index():
     return view_app.send_static_file("index.html")
 
 @app.route("/keiyaku_group/api/list", methods=["GET"])

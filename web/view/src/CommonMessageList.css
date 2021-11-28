@@ -1,0 +1,12 @@
+
+.MessageList {
+    position:relative;
+    left:20px;
+}
+
+.message_info {
+    color: black;
+}
+.message_error {
+    color: red;
+}

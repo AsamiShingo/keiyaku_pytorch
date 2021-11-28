@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/keiyaku_group/view/static/css/main.a2316197.chunk.css",
+    "main.js": "/keiyaku_group/view/static/js/main.2b9f9a32.chunk.js",
+    "main.js.map": "/keiyaku_group/view/static/js/main.2b9f9a32.chunk.js.map",
+    "runtime-main.js": "/keiyaku_group/view/static/js/runtime-main.bcfb2465.js",
+    "runtime-main.js.map": "/keiyaku_group/view/static/js/runtime-main.bcfb2465.js.map",
+    "static/css/2.82e8d4fd.chunk.css": "/keiyaku_group/view/static/css/2.82e8d4fd.chunk.css",
+    "static/js/2.78338bf1.chunk.js": "/keiyaku_group/view/static/js/2.78338bf1.chunk.js",
+    "static/js/2.78338bf1.chunk.js.map": "/keiyaku_group/view/static/js/2.78338bf1.chunk.js.map",
+    "index.html": "/keiyaku_group/view/index.html",
+    "static/css/2.82e8d4fd.chunk.css.map": "/keiyaku_group/view/static/css/2.82e8d4fd.chunk.css.map",
+    "static/css/main.a2316197.chunk.css.map": "/keiyaku_group/view/static/css/main.a2316197.chunk.css.map",
+    "static/js/2.78338bf1.chunk.js.LICENSE.txt": "/keiyaku_group/view/static/js/2.78338bf1.chunk.js.LICENSE.txt",
+    "static/media/semantic.min.css": "/keiyaku_group/view/static/media/outline-icons.ddae9b1b.woff"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.bcfb2465.js",
+    "static/css/2.82e8d4fd.chunk.css",
+    "static/js/2.78338bf1.chunk.js",
+    "static/css/main.a2316197.chunk.css",
+    "static/js/main.2b9f9a32.chunk.js"
+  ]
+}
