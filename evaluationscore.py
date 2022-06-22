@@ -12,7 +12,7 @@ class EvaluationScore:
         
         self.reset_states()
         
-    def update_state(self, y_true, y_pred):
+    def update_state(self, y_true, y_pred, loss):
         if type(y_true) is torch.Tensor:
             y_true = y_true.detach().cpu().numpy().copy()
         
@@ -28,12 +28,16 @@ class EvaluationScore:
         self.tn += tn
         self.fp += fp
         self.fn += fn
-            
+        self.loss += loss
+        self.update_count += 1
+        
     def reset_states(self):
         self.tp = 0
         self.tn = 0
         self.fp = 0
         self.fn = 0
+        self.loss = 0
+        self.update_count = 0
 
     def get_accuracy(self):        
         return round(float((self.tp + self.tn)) / (self.tp + self.tn + self.fp + self.fn), 3)
@@ -48,6 +52,9 @@ class EvaluationScore:
         precision = self.get_precision()
         recall = self.get_recall()
         return round(2 * float(self.get_precision() * self.get_recall()) / (precision + recall) if precision + recall > 0 else 0.0, 3)
+    
+    def get_loss(self):
+        return round(self.loss / self.update_count if self.update_count == 0 else 0.0, 3)
 
     def _get_single_tptnfpfn(self, y_true:np.ndarray, y_pred:np.ndarray):
         y_true = np.where(y_true > self.single_judge, 1, 0)

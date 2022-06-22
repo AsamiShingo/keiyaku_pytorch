@@ -74,6 +74,9 @@ class KeiyakuAI:
             
         for epoch in range(epoch_num+1):
             for is_train in train_moods:
+                score1 = EvaluationScore(class_num=1)
+                score2 = EvaluationScore(class_num=self.model.output_class1_num)
+                
                 if is_train == True:
                     if epoch == 0:
                         continue
@@ -94,6 +97,10 @@ class KeiyakuAI:
                         
                         loss1 = self.criteron[0](outputs[0], labels[0])
                         loss2 = self.criteron[1](outputs[1], labels[1])
+                        
+                        score1.update_state(labels[0], outputs[0], loss1)
+                        score2.update_state(labels[1], outputs[1], loss2)
+                        
                         if is_train == True:
                             loss = loss1 + loss2
                             loss.backward()
@@ -101,8 +108,16 @@ class KeiyakuAI:
                             
                 if is_train == True:
                     learn_scheduler.step()
-                    self.model.save_weight(os.path.join(self.save_dir, "wieght_{}_{:.4f}.dat".format(epoch, loss)))
+                    self.model.save_weight(os.path.join(self.save_dir, "wieght_{}_{:.3f}.dat".format(epoch, loss)))
+                    
+                self._output_score(is_train, score1, score2)
     
+    def _output_score(self, is_train, score1:EvaluationScore, score2:EvaluationScore):
+        print("is_train:{}, loss1:{:.3f}, precision1:{:.3f}, recall1:{:.3f}, fvalue1:{:.3f}, loss2:{:.3f}, precision2:{:.3f}, recall2:{:.3f}, fvalue2:{:.3f}".format(
+            "学習" if is_train == True else "検証", 
+            score1.get_loss(), score1.get_precision(), score1.get_recall(), score1.get_fvalue(),
+            score2.get_loss(), score2.get_precision(), score2.get_recall(), score2.get_fvalue()))
+        
     def predict(self, datas:KeiyakuDataLoader):
         self.model.to(self.device)        
         self.model.eval()
