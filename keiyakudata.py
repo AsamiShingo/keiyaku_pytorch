@@ -2,73 +2,99 @@ import pandas as pd
 import threading
 import os
 import subprocess
+import numpy as np
 from transformersbase import TransformersTokenizerBase
+import torch
+from torch.utils.data import Dataset, DataLoader
 
-class KeiyakuData:
-    _CSV_HEADER_CHECK = ["ファイル", "行数", "カテゴリ", "文章グループ", "分類", "条文分類", "文章"]
-    _CSV_HEADER = ["ファイル", "行数", "カテゴリ", "文章グループ", "分類", "条文分類", "文章", "前文章", "グループ判定"]
+class KeiyakuDataset(Dataset):
+    _CSV_HEADER = ["ファイル", "行数", "カテゴリ", "文章グループ", "分類", "条文分類", "文章"]
 
     create_keiyaku_data_mutex = threading.Lock()
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, is_predict, seq_len, category_num, tokenizer: TransformersTokenizerBase):
         self.file_path = file_path
-
+        self.is_predict = is_predict
+        self.seq_len = seq_len
+        self.category_num = category_num
+        self.tokenizer = tokenizer
+        
         self.df = pd.read_csv(self.file_path, sep=',')
         
         header = list(self.df.columns.values)
-        if header != self._CSV_HEADER_CHECK:
+        if header != self._CSV_HEADER:
             raise ValueError("csvfile header error(path={})".format(self.file_path))
         
-        self.__data_group_set(self.df)
+        self.inputs, self.outputs = self.__load_datas(self.df, self.is_predict, self.seq_len, self.tokenizer)
         
-
     def get_header(self):
         return self._CSV_HEADER
 
     def get_datas(self):
         return self.df.values
+        
+    def __len__(self):
+        return len(self.inputs)
+    
+    def __getitem__(self, index):
+        input = self.inputs[index]
+        ouput = self.outputs[index]
+        
+        intensors = []
+        outtensors = []
+        
+        input = self.tokenizer.keiyaku_encode(input, self.seq_len)
+        intensors = [ torch.tensor(data) for data in input ]
+        
+        outtensors.append(torch.tensor([float(ouput[0])]))
+        outtensors.append(torch.from_numpy(np.eye(self.category_num)[int(ouput[1])].astype(np.float32)).clone())
+        
+        return intensors, outtensors
+    
+    def __load_datas(self, df, is_predict, seq_len, tokenizer: TransformersTokenizerBase):    
+        inputs = []
+        outputs = []
 
-    def get_group_datas(self, tokenizer: TransformersTokenizerBase, seq_len):
-        group_datas = []
-        for data in self.get_datas():
-            input_ids = tokenizer.get_keiyaku_indexes(data[6], data[7], seq_len)
-            outputs = [ data[8], data[4], data[5] ]
-            group_datas.append((input_ids, outputs))
-
-        return group_datas
-
-    def get_study_group_datas(self, tokenizer: TransformersTokenizerBase, seq_len):
-        group_datas = self.get_group_datas(tokenizer, seq_len)
-        return list(filter(lambda x: x[1][0] != -1 and x[1][1] != -1, group_datas))
-
-    def __data_group_set(self, df):
-        df["前文章"] = ""
-        df["グループ判定"] = 1
-
-        bef_data = None
+        bef_data = None        
         for index, data in df.iterrows():
-            if bef_data is None:
-                pass
-            elif pd.isnull(data["カテゴリ"]) or pd.isnull(data["文章グループ"]):
-                df.iat[index, 7] = bef_data["文章"]
-                df.iat[index, 8] = -1
+            input = []
+            output = [-1, -1]
+            
+            if pd.isnull(data["カテゴリ"]) or pd.isnull(data["文章グループ"]):
+                output[0] = -1
+            elif bef_data is None:
+                output[0] = 1 
+            elif data["ファイル"] == bef_data["ファイル"] and data["カテゴリ"] == bef_data["カテゴリ"] and data["文章グループ"] == bef_data["文章グループ"]:
+                output[0] = 0
+            elif data["ファイル"] != bef_data["ファイル"]:
+                output[0] = 1
+                bef_data = None
             else:
-                df.iat[index, 7] = bef_data["文章"]
-                if data["ファイル"] == bef_data["ファイル"] and data["カテゴリ"] == bef_data["カテゴリ"] and data["文章グループ"] == bef_data["文章グループ"]:
-                    df.iat[index, 8] = 0
-
+                output[0] = 1
+                
             if pd.isnull(data["分類"]):
-                df.iat[index, 4] = -1
-
-            if pd.isnull(data["条文分類"]):
-                df.iat[index, 5] = -1
-
-            if pd.isnull(data["文章"]):
-                df.iat[index, 6] = ""
-                data["文章"] = ""
-
+                output[1] = -1
+            else:
+                output[1] = int(data["分類"])
+                
+            if bef_data is not None:
+                input1 = data["文章"]
+                input2 = bef_data["文章"] if not pd.isnull(bef_data["文章"]) else ""
+            else:
+                input1 = data["文章"] if not pd.isnull(data["文章"]) else ""
+                input2 = ""
+            
+                
+            input = tokenizer.get_keiyaku_indexes(input1 if not pd.isnull(input1) else "", input2 if not pd.isnull(input2) else "", seq_len)
+            
+            if is_predict == True or (output[0] != -1 and output[1] != -1):
+                inputs.append(input)
+                outputs.append(output)
+            
             bef_data = data
-
+            
+        return inputs, outputs
+    
     @classmethod
     def create_keiyaku_data(cls, srcfilepath, desttxtpath, destcsvpath):
         cls.create_keiyaku_data_mutex.acquire()
@@ -86,5 +112,15 @@ class KeiyakuData:
                 line=line.rstrip('\n')
                 datas.append([desttxtpath, col+1, "", "", "", "", line])
         
-        df = pd.DataFrame(datas, columns=cls._CSV_HEADER_CHECK)
+        df = pd.DataFrame(datas, columns=cls._CSV_HEADER)
         df.to_csv(destcsvpath, encoding="UTF-8", index=False)
+    
+class KeiyakuDataLoader:
+    def __init__(self, dataset:KeiyakuDataset, is_train, batch_size):
+        self.dataset = dataset
+        self.is_train = is_train
+        self.batch_size = batch_size
+        
+    def __call__(self):
+        return DataLoader(self.dataset, batch_size=self.batch_size, shuffle=self.is_train)
+    

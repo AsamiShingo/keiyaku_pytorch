@@ -1,224 +1,46 @@
-import numpy as np
-import pandas as pd
-import random
-import os
-import tensorflow as tf
-import matplotlib.pyplot as plt
-import japanize_matplotlib
-import json
-from kerasscore import KerasScore
+import torch
+import torch.nn as nn
 from transformersbase import TransformersBase, TransformersTokenizerBase
 
-class KeiyakuModel:
-    def __init__(self, tokenizer: TransformersTokenizerBase, output_class1_num=6):
-        self.bert_model = None
-        self.model = None
+class KeiyakuModel(nn.Module):
+    def __init__(self, bert_model: TransformersBase, tokenizer: TransformersTokenizerBase, output_class1_num=6):
+        super().__init__()
+        
+        self.bert_layer = bert_model.get_transformers_model()
         self.tokenizer = tokenizer
         
-        self.seq_len = 0
+        self.seq_len = bert_model.seq_len
+        self.bert_output_dim = bert_model.output_dim
         self.output_class1_num = output_class1_num
-
-        #学習設定
-        self.pre_epoch = 5
-        self.train_data_split = 0.8
-        self.batch_size = 20
-        self.learn_rate_init= 0.0001
-        self.learn_rate_epoch = 2
-        self.learn_rate_percent = 0.5
         
-        self.optimizer="adam"
-        self.loss=["binary_crossentropy", "categorical_crossentropy"]
-        self.metrics=[
-            [KerasScore(KerasScore.TYPE_TP), KerasScore(KerasScore.TYPE_TN),
-            KerasScore(KerasScore.TYPE_FP), KerasScore(KerasScore.TYPE_FN), 
-            KerasScore(KerasScore.TYPE_ACCURACY), KerasScore(KerasScore.TYPE_PRECISION),
-            KerasScore(KerasScore.TYPE_RECALL), KerasScore(KerasScore.TYPE_FVALUE)],
-            [KerasScore(KerasScore.TYPE_TP, self.output_class1_num), KerasScore(KerasScore.TYPE_TN, self.output_class1_num),
-            KerasScore(KerasScore.TYPE_FP, self.output_class1_num), KerasScore(KerasScore.TYPE_FN, self.output_class1_num), 
-            KerasScore(KerasScore.TYPE_ACCURACY, self.output_class1_num), KerasScore(KerasScore.TYPE_PRECISION, self.output_class1_num),
-            KerasScore(KerasScore.TYPE_RECALL, self.output_class1_num), KerasScore(KerasScore.TYPE_FVALUE, self.output_class1_num)],
-            ]
-
-    def init_model(self, bert: TransformersBase):
-        self.seq_len = bert.seq_len
-        self.bert_model = bert
-
-        bert_layer = self.bert_model.get_transformers_output()
-        output_tensor = tf.keras.layers.Dropout(0.5)(bert_layer)
-        output_tensor1 = tf.keras.layers.Dense(1, activation='sigmoid', name="output1")(output_tensor)
-        output_tensor2 = tf.keras.layers.Dense(self.output_class1_num, activation='softmax', name="output2")(output_tensor)
-        self.model = tf.keras.models.Model(self.bert_model.get_inputs(), [output_tensor1, output_tensor2])
-
-    def load_weight(self, weight_path):
-        self.model.load_weights(weight_path)
+        self.droplayer = nn.Dropout(0.5)
+        self.out1layer = nn.Linear(self.bert_output_dim, 1)
+        self.sigmoidlayer = nn.Sigmoid()
+        self.out2layer = nn.Linear(self.bert_output_dim, self.output_class1_num)
+        self.softmaxlayer = nn.Softmax(dim=1)
         
-    def train_model(self, datas, epoch_num, save_dir):
-        #データ準備
-        train_data_num = int(len(datas) * self.train_data_split)
-        train_datas = datas[:train_data_num]
-        test_datas = datas[train_data_num:]
-
-        random.shuffle(train_datas)
+    def forward(self, inputs):
+        out = self.bert_layer(inputs[0], inputs[1], inputs[2])
+        out = self.droplayer(out["pooler_output"])
+        out1 = self.out1layer(out)
+        out1 = self.sigmoidlayer(out1)
+        out2 = self.out2layer(out)
+        out2 = self.softmaxlayer(out2)
         
-        train_steps_per_epoch = len(train_datas) // self.batch_size
-        test_steps_per_epoch = len(test_datas) // self.batch_size
+        return out1, out2
+            
+    def set_full_train(self, is_full_train:bool):
+        for param in self.bert_layer.parameters():
+            param.requires_grad = is_full_train
+            
+    def save_weight(self, path):
+        torch.save(super().state_dict(), path)
         
-        #モデル情報保存
-        os.makedirs(save_dir, exist_ok=True)
-        with open(os.path.join(save_dir, 'model_summary.txt'), "w") as fp:
-            self.model.summary(print_fn=lambda x: fp.write(x + "\n"))
-
+    def load_weight(self, path):
         try:
-            open(os.path.join(save_dir, 'model.json'), 'w').write(self.model.to_json())
-        except NotImplementedError:
-            print("to_json is NotImplemented")
-
-        #モデル学習(全結合層)
-        self.bert_model.set_trainable(False)
-        self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics='accuracy')
-
-        self.model.fit(self._generator_data(train_datas, self.batch_size), 
-            validation_data=self._generator_data(test_datas, self.batch_size),
-            steps_per_epoch=train_steps_per_epoch, validation_steps=test_steps_per_epoch,
-            batch_size=self.batch_size, epochs=self.pre_epoch)
-
-        #モデル学習(全体)
-        self.bert_model.set_trainable(True)
-        self.model.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.metrics)
-
-        self.model.fit(self._generator_data(train_datas, self.batch_size), 
-            validation_data=self._generator_data(test_datas, self.batch_size),
-            steps_per_epoch=train_steps_per_epoch, validation_steps=test_steps_per_epoch,
-            batch_size=self.batch_size, epochs=epoch_num, callbacks=self._get_callbacks(save_dir))
-
-        #モデル結果保存
-        testscore = self.model.evaluate(self._generator_data(test_datas, self.batch_size),
-            steps=test_steps_per_epoch, batch_size=self.batch_size, verbose=2)
-
-        self.model.save_weights(os.path.join(save_dir, 'weights_last-{:.2f}'.format(testscore[0])))
-        self._create_paramfile(os.path.join(save_dir, 'parameter.json'))
-
-    def predict(self, datas):
-        steps_per_epoch = (len(datas) // self.batch_size)
-        
-        mod_data_num = len(datas) % self.batch_size
-
-        result = self.model.predict(self._generator_data(datas, self.batch_size),
-            steps=steps_per_epoch, batch_size=self.batch_size)
-
-        if mod_data_num > 0:
-            mod_result = self.model.predict(self._generator_data(datas[-mod_data_num:], mod_data_num), steps=1, batch_size=mod_data_num)
-            result[0] = np.concatenate([result[0], mod_result[0]])
-            result[1] = np.concatenate([result[1], mod_result[1]])
-
-        return result
-
-    def _get_learn_rate(self, epoch):
-        return self.learn_rate_init * (self.learn_rate_percent ** (epoch // self.learn_rate_epoch))
-
-    class ResultOutputCallback(tf.keras.callbacks.Callback):
-        SAVE_ROWS = ["epoch", "loss",
-            "output1_loss", "output1_tp", "output1_tn", "output1_fp", "output1_fn", "output1_accuracy", "output1_precision", "output1_recall", "output1_fvalue",
-            "output2_loss", "output2_tp", "output2_tn", "output2_fp", "output2_fn", "output2_accuracy", "output2_precision", "output2_recall", "output2_fvalue",
-            "val_loss",
-            "val_output1_loss", "val_output1_tp", "val_output1_tn", "val_output1_fp", "val_output1_fn", "val_output1_accuracy", "val_output1_precision", "val_output1_recall", "val_output1_fvalue",
-            "val_output2_loss", "val_output2_tp", "val_output2_tn", "val_output2_fp", "val_output2_fn", "val_output2_accuracy", "val_output2_precision", "val_output2_recall", "val_output2_fvalue",
-            ]
-
-        def __init__(self, save_dir):
-            self.df = pd.DataFrame(columns=self.SAVE_ROWS)
-            self.save_dir = save_dir
-            self.save_csv = os.path.join(self.save_dir, "result_data.csv")
-
-        def on_epoch_end(self, epoch, logs={}):
-            values = [epoch+1] + [logs[key] for key in self.SAVE_ROWS if key != "epoch" and key in logs]
-
-            self.df = self.df.append(pd.Series(values, index = self.SAVE_ROWS), ignore_index = True)
-            self.df.to_csv(self.save_csv, index = False)
-
-        def on_train_end(self, logs={}):
-            self._create_graph("文章グループ化", self.df, "epoch", ["val_output1_fvalue", "val_output1_precision", "val_output1_recall"], ["output1_loss", "val_output1_loss"], os.path.join(self.save_dir, "result_graph1.png"))
-            self._create_graph("文章分類", self.df, "epoch", ["val_output2_fvalue", "val_output2_precision", "val_output2_recall"], ["output2_loss", "val_output2_loss"], os.path.join(self.save_dir, "result_graph2.png"))
-        
-        def _create_graph(self, title, datas, xlabel, ylabels1, ylabels2, savefile):
-            # GPU環境でnp.dotがabortするため機能削除し、空ファイル作成に変更(原因不明)
-            # xvalue = datas[xlabel].values
-            # yvalues1 = [ datas[label].values for label in ylabels1 ]
-            # yvalues2 = [ datas[label].values for label in ylabels2 ]
+            weights = torch.load(path)
+        except:
+            weights = torch.load(path, map_location={'cuda:0': 'cpu'})
             
-            # fig = plt.figure()
-            # ax1 = fig.add_subplot(1, 1, 1)
-            # ax2 = ax1.twinx()
-
-            # for yvalue, ylabel in zip(yvalues1, ylabels1):
-            #     ax1.plot(xvalue, yvalue, marker='*', label=ylabel)
-
-            # for yvalue, ylabel in zip(yvalues2, ylabels2):
-            #     ax2.plot(xvalue, yvalue, marker='o', label=ylabel)
-
-            # ax1.set_ylim(0, 1)
-            # ax1.set_yticks(np.arange(0, 1.01, step=0.1))
-            # handler1, label1 = ax1.get_legend_handles_labels()
-
-            # ax2.set_ylim(0, 1.5)
-            # ax2.set_yticks(np.arange(0, 1.51, step=0.1))
-            # handler2, label2 = ax2.get_legend_handles_labels()
-
-            # ax1.set_title(title)
-            # ax1.set_xticks(xvalue)
-            # ax1.legend(handler1 + handler2, label1 + label2, loc='upper left', borderaxespad=0.)
-            
-            # plt.savefig(savefile)
-            import pathlib
-            pathlib.Path(savefile).touch()
-
-    def _get_callbacks(self, save_dir):
-        callbacks = []
-
-        callbacks.append(tf.keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(save_dir, 'weights_{epoch:03d}-{loss:.2f}-{output1_fvalue:.2f}-{output2_fvalue:.2f}-{val_loss:.2f}-{val_output1_fvalue:.2f}-{val_output2_fvalue:.2f}'),
-                monitor='val_loss',
-                verbose=1,
-                save_weights_only=True,
-                save_best_only=True,
-                mode='auto'))
+        super().load_state_dict(weights)
         
-        callbacks.append(self.ResultOutputCallback(save_dir))
-        callbacks.append(tf.keras.callbacks.LearningRateScheduler(self._get_learn_rate))
-
-        return callbacks
-
-    def _generator_data(self, all_datas, batch_size):
-        dummy_inputs = self.tokenizer.keiyaku_encode(all_datas[0][0], self.seq_len)
-        input_num = len(dummy_inputs)
-
-        while True:
-            for step in range(len(all_datas) // batch_size):
-                datas = all_datas[step*batch_size:(step+1)*batch_size]
-
-                x_outs = [ np.zeros((batch_size, self.seq_len), dtype=np.int32) for _ in range(input_num)]
-                y_out1 = np.zeros((batch_size,))
-                y_out2 = np.zeros((batch_size, self.output_class1_num))
-
-                for i in range(batch_size):
-                    datas_inputs = self.tokenizer.keiyaku_encode(datas[i][0], self.seq_len)
-                    datas_outputs = datas[i][1]
-
-                    for j, datas_input in enumerate(datas_inputs):
-                        x_outs[j][i, :] = datas_input[:]
-
-                    y_out1[i] = datas_outputs[0]
-                    y_out2[i, :] = tf.keras.utils.to_categorical(datas_outputs[1], num_classes=self.output_class1_num)
-                        
-                yield x_outs, [y_out1, y_out2]
-
-    def _create_paramfile(self, savefile):
-        with open(savefile, "w", encoding="utf-8") as f:
-            data = {}
-            data["batch_size"] = self.batch_size
-            data["seq_len"] = self.seq_len
-            data["pre_epoch"] = self.pre_epoch
-            data["learn_rate_init"] = self.learn_rate_init
-            data["learn_rate_epoch"] = self.learn_rate_epoch
-            data["learn_rate_percent"] = self.learn_rate_percent
-            json.dump(data, f, ensure_ascii=False, indent=4)

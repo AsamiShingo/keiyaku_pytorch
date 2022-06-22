@@ -1,44 +1,40 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-import tensorflow as tf
+import torch
+import torch.nn as nn
 import transformers
 import os
+import numpy as np
 
 class TransformersBase(ABC):
-    def __init__(self, model_name: str, seq_len: int):
+    def __init__(self, model_name: str, model_full_name: str, seq_len: int, output_dim: int):
         self.model_name = model_name
+        self.model_full_name = model_full_name
         self.seq_len = seq_len
-
+        self.output_dim = output_dim
+        
         self.inputs = None
         self.outputs = None        
-        self.transformers_model: transformers.TFPreTrainedModel = None
+        self.transformers_model: transformers.PreTrainedModel = None
         
-    def get_transformers_model(self) -> transformers.TFPreTrainedModel:
+    def get_transformers_model(self) -> transformers.PreTrainedModel:
         return self.transformers_model
-
-    def get_inputs(self) -> List[tf.keras.layers.Layer]:
-        return self.inputs
-
-    def get_transformers_output(self) -> tf.keras.layers.Layer:
-        return self.outputs["pooler_output"]
-
-    def set_trainable(self, training: bool) -> None:
-        self.transformers_model.trainable = training
 
     @abstractmethod
     def init_model(self, model_dir_path: str) -> None:
         pass
 
     @abstractmethod
-    def download_save(self, model_full_name: str, model_dir_path: str) -> None:
+    def download_save(self, model_dir_path: str) -> None:
         pass
 
     def _get_model_path(self, model_dir_path: str) -> str:
         return os.path.join(model_dir_path, self.model_name)         
 
 class TransformersTokenizerBase(ABC):
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, model_full_name: str):
         self.model_name = model_name
+        self.model_full_name = model_full_name
 
         self.tokenizer: transformers.PreTrainedTokenizerBase = None
 
@@ -76,10 +72,6 @@ class TransformersTokenizerBase(ABC):
             result.append(encode['attention_mask'])
         if "token_type_ids" in encode:
             result.append(encode['token_type_ids'])
-
-        # result.append(encode['input_ids'])
-        # result.append(encode['attention_mask'])
-        # result.append(encode['token_type_ids'])
 
         return result
 
@@ -119,7 +111,7 @@ class TransformersTokenizerBase(ABC):
         pass
 
     @abstractmethod
-    def download_save(cls, model_full_name: str, save_dir: str) -> None:
+    def download_save(self, save_dir: str) -> None:
         pass    
 
     def _convert_vocabs(self, vocabs: List[str]) -> List[str]:

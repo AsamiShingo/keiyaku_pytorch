@@ -3,19 +3,13 @@ import threading
 from keiyakumodel import KeiyakuModel
 from transformersbase import TransformersBase, TransformersTokenizerBase
 from transformersbert import TransformersBert, TransformersTokenizerBert
-from transformersbertcolorful import TransformersBertColorful, TransformersTokenizerBertColorful
-from transformersroberta import TransformersRoberta, TransformersTokenizerRoberta
 
 class KeiyakuModelFactory:
     MODEL_NAME_BERT="bert"
-    MODEL_NAME_BERTCOLORFUL="bertcolorful"
-    MODEL_NAME_ROBERTA="roberta"
 
-    MODEL_FULL_NAME_BERT=r"cl-tohoku/bert-base-japanese-v2"
-    MODEL_FULL_NAME_BERTCOLORFUL=r"colorfulscoop/bert-base-ja"
-    MODEL_FULL_NAME_ROBERTA=r"rinna/japanese-roberta-base"
+    MODEL_FULL_NAME_BERT=r"colorfulscoop/bert-base-ja"
 
-    DEFAULT_MODEL_NAME="bert"
+    DEFAULT_MODEL_NAME=MODEL_NAME_BERT
     now_model_name:str = ""
 
     seq_len = 256
@@ -32,8 +26,7 @@ class KeiyakuModelFactory:
         if model_name != cls.now_model_name:
             cls.get_transfomers(model_name, download)
 
-            cls.keiyakumodel = KeiyakuModel(cls.tokenizer)
-            cls.keiyakumodel.init_model(cls.model)
+            cls.keiyakumodel = KeiyakuModel(cls.model, cls.tokenizer)
             if loadweight == True:
                 weight_path = os.path.join(os.path.dirname(__file__), r"data", r"model", cls.model.model_name, r"weights")
                 cls.keiyakumodel.load_weight(weight_path)
@@ -48,8 +41,8 @@ class KeiyakuModelFactory:
 
         modeldata_path = modeldata_path = os.path.join(os.path.dirname(__file__), r"data", r"model")
         if download == True:
-            cls.model.download_save(cls.model_full_name, modeldata_path)
-            cls.tokenizer.download_save(cls.model_full_name, modeldata_path)
+            cls.model.download_save(modeldata_path)
+            cls.tokenizer.download_save(modeldata_path)
 
         cls.model.init_model(modeldata_path)
         cls.tokenizer.init_tokenizer(modeldata_path)
@@ -66,14 +59,6 @@ class KeiyakuModelFactory:
             cls.model = TransformersBert(seq_len=cls.seq_len)
             cls.tokenizer = TransformersTokenizerBert()
             cls.model_full_name = cls.MODEL_FULL_NAME_BERT
-        elif model_name == cls.MODEL_NAME_BERTCOLORFUL:
-            cls.model = TransformersBertColorful(seq_len=cls.seq_len)
-            cls.tokenizer = TransformersTokenizerBertColorful()
-            cls.model_full_name = cls.MODEL_FULL_NAME_BERTCOLORFUL
-        elif model_name == cls.MODEL_NAME_ROBERTA:
-            cls.model = TransformersRoberta(seq_len=cls.seq_len)
-            cls.tokenizer = TransformersTokenizerRoberta()
-            cls.model_full_name = cls.MODEL_FULL_NAME_ROBERTA
         else:
             raise NotImplementedError("model_name error(model_name={})".format(model_name))
 

@@ -1,13 +1,13 @@
 import pytest
 import os
 import tensorflow as tf
-from keiyakudata import KeiyakuData
+from keiyakudata import KeiyakuDataset, KeiyakuDataLoader
 from transformersbase import TransformersBase, TransformersTokenizerBase
 import transformers
 
 class TransfoermersEmpty(TransformersBase):
     def __init__(self):
-        super().__init__("empty", 20)
+        super().__init__("empty", "empty", 20, 1)
 
     def init_model(self, model_dir_path: str) -> None:
         self.inputs = []
@@ -25,7 +25,7 @@ class TransfoermersEmpty(TransformersBase):
 
 class TransfoermersTokenizerEmpty(TransformersTokenizerBase):
     def __init__(self):
-        super().__init__("empty")
+        super().__init__("empty", "empty")
 
     def init_tokenizer(self, model_dir_path: str) -> None:
         self.tokenizer = None
@@ -49,5 +49,5 @@ def test_transformers_tokenizer_empty():
 def test_keiyakudata():
     test_dir = os.path.join(os.path.dirname(__file__), r"data")    
 
-    keiyakudata = KeiyakuData(os.path.join(test_dir, r"test_keiyaku.csv"))
+    keiyakudata = KeiyakuDataset(os.path.join(test_dir, r"test_keiyaku.csv"))
     return keiyakudata
