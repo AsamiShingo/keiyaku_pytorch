@@ -15,7 +15,7 @@ class TestEvaluationScore:
         assert evaluation_score.tn == 2
         assert evaluation_score.fp == 2
         assert evaluation_score.fn == 2
-
+        
         evaluation_score = EvaluationScore(class_num=1, single_judge=0.3)
         y_true1 = np.array([  0,   0,   0,   0,   1,   1,   1])
         y_pred1 = np.array([0.0, 0.4, 0.6, 1.0, 0.0, 0.4, 0.6])
@@ -96,6 +96,21 @@ class TestEvaluationScore:
         evaluation_score.update_state(torch.from_numpy(y_true2), torch.from_numpy(y_pred2))
         
         assert evaluation_score.fn == 3
+    
+    def test_get_loss(self):
+        evaluation_score = EvaluationScore()
+
+        y_true1 = np.array([  0,   0,   0,   0,   1])
+        y_pred1 = np.array([0.0, 0.4, 0.6, 1.0, 0.0])
+        evaluation_score.update_state(torch.from_numpy(y_true1), torch.from_numpy(y_pred1), 0.8)
+
+        assert evaluation_score.get_loss() == 0.8
+
+        y_true2 = np.array([  1,   1,   1,   1])
+        y_pred2 = np.array([0.4, 0.6, 1.0, 0.0])
+        evaluation_score.update_state(torch.from_numpy(y_true2), torch.from_numpy(y_pred2), 0.2)
+        
+        assert evaluation_score.get_loss() == 0.5
         
     def test_get_accuracy(self):
         evaluation_score = EvaluationScore()
@@ -174,12 +189,16 @@ class TestEvaluationScore:
         y_pred = np.array([0.0])
 
         evaluation_score = EvaluationScore()
-        evaluation_score.update_state(torch.from_numpy(y_true), torch.from_numpy(y_pred))
+        assert evaluation_score.get_loss() == 0.0
         assert evaluation_score.get_precision() == 0.0
-        
-        evaluation_score = EvaluationScore()
-        evaluation_score.update_state(torch.from_numpy(y_true), torch.from_numpy(y_pred))
         assert evaluation_score.get_recall() == 0.0
+        assert evaluation_score.get_fvalue() == 0.0
+        
+        evaluation_score.update_state(torch.from_numpy(y_true), torch.from_numpy(y_pred))
+        assert evaluation_score.get_loss() == 0.0
+        assert evaluation_score.get_precision() == 0.0
+        assert evaluation_score.get_recall() == 0.0
+        assert evaluation_score.get_fvalue() == 0.0
         
 class TestEvaluationScoreOutput:
     def test_output_csv_image(self, tmpdir):
