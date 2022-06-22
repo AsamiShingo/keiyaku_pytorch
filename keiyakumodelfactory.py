@@ -28,7 +28,7 @@ class KeiyakuModelFactory:
 
             cls.keiyakumodel = KeiyakuModel(cls.model, cls.tokenizer)
             if loadweight == True:
-                weight_path = os.path.join(os.path.dirname(__file__), r"data", r"model", cls.model.model_name, r"weights")
+                weight_path = os.path.join(os.path.dirname(__file__), r"data", r"model", cls.model.model_name, r"weights.dat")
                 cls.keiyakumodel.load_weight(weight_path)
 
             cls.now_model_name = model_name

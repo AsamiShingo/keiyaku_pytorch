@@ -78,7 +78,7 @@ class KeiyakuDataset(Dataset):
                 output[1] = int(data["分類"])
                 
             if bef_data is not None:
-                input1 = data["文章"]
+                input1 = data["文章"] if not pd.isnull(data["文章"]) else ""
                 input2 = bef_data["文章"] if not pd.isnull(bef_data["文章"]) else ""
             else:
                 input1 = data["文章"] if not pd.isnull(data["文章"]) else ""

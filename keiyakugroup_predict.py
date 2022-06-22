@@ -1,10 +1,11 @@
-from keiyakudata import KeiyakuData
-from keiyakumodel import KeiyakuModel
+from keiyakudata import KeiyakuDataset, KeiyakuDataLoader
+from keiyakuai import KeiyakuAI
 from keiyakumodelfactory import KeiyakuModelFactory
 import numpy as np
 import sys
+import pandas as pd
 
-keiyakudata_path = r".\data\keiyakudata.csv"
+keiyakudata_path = r".\data\test_keiyakudata.csv"
 save_dir = r".\savedir"
 score_threshold = 0.5
 
@@ -14,32 +15,29 @@ if len(sys.argv) >= 2:
 
 keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel(model_name)
 
-keiyakudata = KeiyakuData(keiyakudata_path)
-datas = keiyakudata.get_datas()
-predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
+predict_data = KeiyakuDataset(keiyakudata_path, True, 256, 6, tokenizer)
+predict_loader = KeiyakuDataLoader(predict_data, False, 20)
+
+ai = KeiyakuAI(keiyakumodel, save_dir)
+predict_results = ai.predict(predict_loader)
 
 np.set_printoptions(precision=2, floatmode='fixed')
 
 bef_file = ""
-for i in range(0, len(datas), 1000):
-    targets = datas[i:i+1000]
-    predict_targets = predict_datas[i:i+1000]
-    scores = keiyakumodel.predict(predict_targets)
+for datas, score1, score2 in zip(predict_data.get_datas(), predict_results[0], predict_results[1]):
+    file = datas[0]
+    sentense =  datas[6] if not pd.isnull(datas[6]) else ""
+    kind1 = score2.argmax()
 
-    for target, score1, score2 in zip(targets, scores[0], scores[1]):
-        file = target[0]
-        sentense = target[6]
-        kind1 = score2.argmax()
+    if bef_file != file:
+        print("{}*********************************************".format(file))
 
-        if bef_file != file:
-            print("{}*********************************************".format(file))
-
-        if score1 >= score_threshold:
-            print("{}---------------------------------------------".format(score1))
-            
-        print("{}-{:0.2f}:{}".format(kind1, score2[kind1], sentense))
+    if score1 >= score_threshold:
+        print("{}---------------------------------------------".format(score1))
         
-        bef_file = file
+    print("{}-{:0.2f}:{}".format(kind1, score2[kind1], sentense))
+    
+    bef_file = file
 
 
     
