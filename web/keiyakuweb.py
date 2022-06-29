@@ -13,8 +13,10 @@ import threading
 import json
 import numpy as np
 import datetime
-from keiyakudata import KeiyakuData
+import pandas as pd
+from keiyakudata import KeiyakuDataset, KeiyakuDataLoader
 from keiyakumodelfactory import KeiyakuModelFactory
+from keiyakuai import KeiyakuAI
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), r"data")
 ANALYZE_DIR = os.path.join(os.path.dirname(__file__), r"analyze")
@@ -112,14 +114,16 @@ class KeiyakuWebData:
 def keiyaku_analyze(csvpath):
     keiyaku_analyze_mutex.acquire()
 
-    keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()    
-    keiyakudata = KeiyakuData(csvpath)
-    predict_datas = keiyakudata.get_group_datas(tokenizer, model.seq_len)
-    score1, score2 = keiyakumodel.predict(predict_datas)
+    keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel()
+    keiyakudata = KeiyakuDataset(csvpath, True, keiyakumodel.seq_len, keiyakumodel.output_class1_num, tokenizer)
+    keiyakuloader = KeiyakuDataLoader(keiyakudata, False, 20)
+    
+    ai = KeiyakuAI(keiyakumodel)
+    score1, score2 = ai.predict(keiyakuloader)
 
     keiyaku_analyze_mutex.release()
     
-    return score1, score2
+    return score1, score2, keiyakudata.get_datas()
 
 view_app = Blueprint("view", __name__, static_url_path='/keiyaku_group/view', static_folder='./view/build')
 app = Flask(__name__)
@@ -177,7 +181,7 @@ def upload():
         flash("拡張子{}はアップロードできません".format(extension if extension != "" else "無し"), category="flash_error")
     else:
         f.save(data.get_filepath())
-        KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
+        KeiyakuDataset.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
 
     return redirect(url_for("index"))
 
@@ -200,7 +204,7 @@ def api_upload():
         result["code"] = 9
     else:
         f.save(data.get_filepath())
-        KeiyakuData.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
+        KeiyakuDataset.create_keiyaku_data(data.get_filepath(), data.get_txtpath(), data.get_csvpath())
         result["data"]["seqid"] = data.seqid
         result["data"]["filename"] = data.get_orgfilename()
         result["message"].append({"category": "info", "message": "{}をアップロードしました".format(data.get_orgfilename())})
@@ -225,7 +229,7 @@ def download_txt():
 
 @app.route("/keiyaku_group/api/download_txt", methods=["POST"])
 def api_download_txt():
-    return download_txt();
+    return download_txt()
 
 @app.route("/keiyaku_group/delete", methods=["POST"])
 def delete():
@@ -262,15 +266,13 @@ def analyze():
     seqid = request.form["seqid"]
     data = KeiyakuWebData(seqid)
     
-    scores1, scores2 = keiyaku_analyze(data.get_csvpath())
-    keiyakudata = KeiyakuData(data.get_csvpath())
-    sentensedatas = keiyakudata.get_datas()
+    scores1, scores2, sentensedatas = keiyaku_analyze(data.get_csvpath())
     analyze_path = data.create_analyzepath()
-
+    
     np.set_printoptions(precision=2, floatmode='fixed')
     with open(analyze_path, "w") as f:
-        for sentensedata, score1, score2 in zip(sentensedatas, scores1, scores2):
-            sentense = sentensedata[6]
+        for score1, score2, sentensedata in zip(scores1, scores2, sentensedatas):
+            sentense = sentensedata[6] if not pd.isnull(sentensedata[6]) else ""
             kind1 = score2.argmax()
             if score1 >= 0.5:
                 f.write("{}---------------------------------------------\n".format(score1))
@@ -290,7 +292,7 @@ def api_analyze_json():
     
     data = KeiyakuWebData(seqid)
 
-    scores1, scores2 = keiyaku_analyze(data.get_csvpath())
+    scores1, scores2, _ = keiyaku_analyze(data.get_csvpath())
     
     jsondata = {}
     for col, score in enumerate(zip(scores1, scores2)):
