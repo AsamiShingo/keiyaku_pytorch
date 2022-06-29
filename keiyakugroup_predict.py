@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import pandas as pd
 
-keiyakudata_path = r".\data\test_keiyakudata.csv"
+keiyakudata_path = r".\data\keiyaku_predict.csv"
 save_dir = r".\savedir"
 score_threshold = 0.5
 

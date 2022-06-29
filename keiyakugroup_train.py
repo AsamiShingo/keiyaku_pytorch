@@ -7,8 +7,8 @@ import sys
 
 starttime=datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
-studydata_path = r".\data\test_keiyaku_study.csv"
-testdata_path = r".\data\test_keiyaku_test.csv"
+studydata_path = r".\data\keiyaku_study.csv"
+testdata_path = r".\data\keiyaku_test.csv"
 save_dir = r".\savedir"
 epoch_num = 20
 
