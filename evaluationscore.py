@@ -54,7 +54,7 @@ class EvaluationScore:
         return round(2 * float(self.get_precision() * self.get_recall()) / (precision + recall) if precision + recall > 0 else 0.0, 3)
     
     def get_loss(self):
-        return round((self.loss / self.update_count) if self.update_count > 0 else 0.0, 3)
+        return round(float(self.loss / self.update_count) if self.update_count > 0 else 0.0, 3)
 
     def _get_single_tptnfpfn(self, y_true:np.ndarray, y_pred:np.ndarray):
         y_true = np.where(y_true > self.single_judge, 1, 0)
