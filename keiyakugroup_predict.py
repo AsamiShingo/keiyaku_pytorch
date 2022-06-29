@@ -18,7 +18,7 @@ keiyakumodel, model, tokenizer = KeiyakuModelFactory.get_keiyakumodel(model_name
 predict_data = KeiyakuDataset(keiyakudata_path, True, 256, 6, tokenizer)
 predict_loader = KeiyakuDataLoader(predict_data, False, 20)
 
-ai = KeiyakuAI(keiyakumodel, save_dir)
+ai = KeiyakuAI(keiyakumodel)
 predict_results = ai.predict(predict_loader)
 
 np.set_printoptions(precision=2, floatmode='fixed')

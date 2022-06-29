@@ -25,5 +25,5 @@ test_loader = KeiyakuDataLoader(test_data, False, 20)
 
 save_dir = os.path.join(save_dir, starttime + "_" + model.model_name)
 
-ai = KeiyakuAI(keiyakumodel, save_dir)
-ai.train_model(study_loader, test_loader, 20)
+ai = KeiyakuAI(keiyakumodel)
+ai.train_model(study_loader, test_loader, 20, save_dir)

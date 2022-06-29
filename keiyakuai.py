@@ -26,9 +26,8 @@ class KeiyakuAI:
     MODEL_SUMMARY_FILE_NAME = "model_summary.txt"
     PARAM_FILE_NAME = "model_param.txt"
     
-    def __init__(self, model:KeiyakuModel, save_dir):
+    def __init__(self, model:KeiyakuModel):
         self.model = model
-        self.save_dir = save_dir
         
         #学習設定
         self.batch_size = 20
@@ -43,14 +42,14 @@ class KeiyakuAI:
         self.criteron = [nn.BCELoss(), nn.CrossEntropyLoss()]
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    def load_weight(self, weight_file=DEFAULT_WEIGHT_FILE_NAME):
-        load_path = os.path.join(self.save_dir, weight_file)
+    def load_weight(self, weight_path, weight_file=DEFAULT_WEIGHT_FILE_NAME):
+        load_path = os.path.join(weight_path, weight_file)
         self.model.load_weight(load_path)
         
-    def train_model(self, train_datas:KeiyakuDataLoader, test_datas:KeiyakuDataLoader, epoch_num):        
+    def train_model(self, train_datas:KeiyakuDataLoader, test_datas:KeiyakuDataLoader, epoch_num, save_dir):        
         #モデル情報保存
-        os.makedirs(self.save_dir, exist_ok=True)
-        with open(os.path.join(self.save_dir, self.MODEL_SUMMARY_FILE_NAME), "w") as fp:
+        os.makedirs(save_dir, exist_ok=True)
+        with open(os.path.join(save_dir, self.MODEL_SUMMARY_FILE_NAME), "w") as fp:
             fp.write(str(self.model))
 
         #モデル学習(全結合層)
@@ -59,10 +58,10 @@ class KeiyakuAI:
 
         #モデル学習(全体)
         self.model.set_full_train(True)
-        self._train_model(self.optimizer, train_datas, test_datas, epoch_num, self.save_dir)
+        self._train_model(self.optimizer, train_datas, test_datas, epoch_num, save_dir)
 
         #モデル結果保存
-        self.model.save_weight(os.path.join(self.save_dir, self.DEFAULT_WEIGHT_FILE_NAME))
+        self.model.save_weight(os.path.join(save_dir, self.DEFAULT_WEIGHT_FILE_NAME))
 
     def _train_model(self, optimizer, train_datas:KeiyakuDataLoader, test_datas:KeiyakuDataLoader, epoch_num, save_dir):
         self.model.to(self.device)
@@ -108,7 +107,9 @@ class KeiyakuAI:
                             
                 if is_train == True:
                     learn_scheduler.step()
-                    self.model.save_weight(os.path.join(self.save_dir, "wieght_{}_{:.3f}.dat".format(epoch, loss)))
+                    
+                    if save_dir != None:
+                        self.model.save_weight(os.path.join(save_dir, "wieght_{}_{:.3f}.dat".format(epoch, loss)))
                     
                 self._output_score(is_train, score1, score2)
     
@@ -134,8 +135,8 @@ class KeiyakuAI:
             
         return result
 
-    def _create_paramfile(self):
-        with open(os.path.join(self.save_dir, self.PARAM_FILE_NAME), "w", encoding="utf-8") as f:
+    def _create_paramfile(self, save_dir, save_file=PARAM_FILE_NAME):
+        with open(os.path.join(save_dir, save_file), "w", encoding="utf-8") as f:
             data = {}
             data["batch_size"] = self.batch_size
             data["pre_epoch_num"] = self.pre_epoch_num
